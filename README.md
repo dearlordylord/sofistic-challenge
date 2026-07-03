@@ -1,3 +1,5 @@
+For the report please see [NOTES.md](NOTES.md)
+
 # Sofistic.AI Technical Test — Transactions Feed
 
 Thanks for taking the time to do this test! We've tried to keep it close to the kind of work we actually do: taking imperfect financial data and turning it into a clean, fast client experience.

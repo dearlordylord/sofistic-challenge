@@ -1,54 +1,42 @@
 # API and Structure Notes
 
-## Decision Process
+This is probably the simplest stage, because with LLMs I just pull my current scaffolding into the repo.
 
-We started from the README acceptance criteria: the frontend must fetch from the backend, search should update on change without stale results, duplicate transactions must be suppressed, merchant names must be normalized, and all cleaning/search logic must stay server-side.
+I didn't go with Nuxt because I have confidence Codex would manage my scaffolding with no surprises in 2hours window. I have no idea about its quirks or their absence when it comes to Nuxt.
 
-We compared the starter repo against the stronger `../luigi*` structure. The useful part to copy was not the exact domain shape, but the discipline: typed package seams, shared schemas at the frontend/backend interface, pure domain modules, storage adapters, and repo-level build/typecheck/test/lint gates.
+Otherwise I would have gone with Nuxt because of the team's experience with it.
 
-We then chose a smaller package split than Luigi:
+## general api structure notes
+
+I always go by-default with strict codecs (two-way isomorphic parsers) at boundaries, e.g. APIs and DBs.
+
+Typescript allows us to share schemas so a separate package for schemas it is: packages/api/src/schemas.ts
+
+![type-review-view.png](docs/type-review-view.png)
+
+Important note that if I need e.g. to implement DB boundaries, or external APIs etc, the schemas would sit in the proper feature packages, in the best vertical-slice architecture way.
+
+Along with the rest model/view/controller concerns or whatever the project architecture dictates: I prefer technical structure serving features and domain concepts, not vice versa.
+
+## Split
 
 - `api` for the public HTTP interface.
 - `web` for the React client.
 - `server` for HTTP wiring.
 - `transactions-shared` for internal transaction data structures.
-- `transactions-clean` for cleanup, dedupe, normalization, and search.
+- `transactions-clean` for cleanup, dedupe, normalization.
 - `transactions-db` for storage concerns.
 
-For the feed contract, we deliberately kept the main endpoint narrow. The UI should receive display-ready data, while cleanup provenance, raw rows, duplicate groups, and mapping decisions remain behind server-side modules or future audit endpoints.
+For the feed api call, I deliberately kept the main endpoint to serve already-cleaned-up data. 
 
-During the API grill, we made these contract decisions in order:
+I assume the frontend doesn't care about provenance.
 
-1. The feed response is display-only.
-2. Feed item IDs are canonical transaction IDs owned by this system.
-3. Money should use integer minor units, with JSON-safe handling for values that may exceed JavaScript safe integers.
-4. Currency should be a schema-defined union.
-5. Dates should be date-only ISO strings after reconsidering the seed data.
-6. Search should use explicit structured query params.
-7. Pagination is intentionally excluded from the first contract.
+I used the grill-me skill for reflecting llm with api decisions. Important ones:
 
-## Current API Contract Direction
+- Money are bigint strings in json layer, and strictly integers in any code
+- Currency should be a schema-defined union
+- Dates should be date-only ISO strings (I initially wanted full ISO but looked at the data and decided for date-only)
+- Search should use explicit structured query params (instead of q=)
+- Pagination is intentionally excluded for the MVP purpos
 
-- `GET /api/transactions` returns display-ready feed data only.
-- The feed item ID is a canonical transaction ID owned by this system, not a raw row ID or upstream `external_id`.
-- Feed items are `{ id, transactionDate, merchant, amountMinor, currency, category }`.
-- Money is represented as `amountMinor`, a string-encoded integer minor-unit value such as `"-1798"`.
-- Currency is the schema-defined union `"CAD"` for the first version.
-- Transaction dates should be date-only ISO strings, for example `2026-06-18`.
-- Search uses the explicit `merchantQuery` query param rather than a vague `q`.
-- The response does not expose cleanup provenance, raw rows, duplicate groups, `limit`, `cursor`, or `nextCursor`.
 
-## Pagination Decision
-
-We decided not to include pagination in the first API contract. The seed data is small, and omitting pagination keeps the take-home contract easier to reason about while the cleaning and display model are still being shaped.
-
-In a proper production system, this endpoint should add pagination before the dataset can grow without bound. A likely future shape is `limit` plus a stable cursor, with a response-level `nextCursor`.
-
-## Package Structure Direction
-
-- `@sofistic/api` owns frontend/backend interface contracts and schemas.
-- `@sofistic/transactions-shared` owns internal transaction data structures.
-- `@sofistic/transactions-clean` owns cleanup, dedupe, normalization, and search behavior.
-- `@sofistic/transactions-db` owns storage concerns.
-- `@sofistic/server` wires HTTP to the transaction modules.
-- `@sofistic/web` owns the React UI.

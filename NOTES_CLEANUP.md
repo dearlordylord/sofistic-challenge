@@ -1,110 +1,50 @@
-# Cleanup Notes
+# Cleanup
 
-## What We Investigated
+For cleanup, I decided that keeping the original table is the way. We have provenance and I also don't know whether this table is a result from external system we have no control over.
 
-We inspected the seeded transaction data and confirmed the raw feed is intentionally messy:
+The original table has to be cleaned up by mapping it into our internal model. 
 
-- 86 raw rows.
-- 77 rows after exact de-duplication.
-- 73 rows after normalized business de-duplication.
-- 11 business duplicate groups with 13 duplicate source rows.
-- Mixed date formats, mixed numeric/text amounts, currency casing/nulls, missing categories, and inconsistent merchant descriptors.
+[0001-transaction-raw-to-canonical-mapping.md](docs/adr/0001-transaction-raw-to-canonical-mapping.md) describes the mapping workflow rules.
 
-Initial analysis incorrectly treated missing local Node 22 support as a practical blocker. That was corrected by running Node 22.13.1 locally through `npm exec`, seeding SQLite, and verifying the counts directly from the DB.
+I came up to this ADR through planning with (an older version of) https://github.com/mattpocock/skills/blob/main/skills/engineering/grill-with-docs/SKILL.md skill, prompting the agent to ask me questions.
 
-## Business Decisions From The Chat
+This ADR is an example of specs that we'd refine and use in whatever system will stand between dirty data and our database,
 
-- Do not clean the raw `transactions` table in place.
-- Treat `transactions` as the immutable raw source table.
-- Map raw data into canonical/provenance tables instead.
-- Ambiguous-but-parseable rows should still become canonical transactions when the core money movement is trustworthy.
-- Every assumption must be materialized in provenance columns/records so no raw data or decision is lost.
-- Do not require a person to classify every row one by one.
-- Use an LLM-assisted workflow for semantic merchant/category mapping for now.
-- The LLM must not alter financial facts like date, amount, currency, or whether money moved.
-- Wrong LLM suggestions stay in `llm_mapping_suggestions` with `accepted = 0` and a rejection reason; they become `mapping_exceptions` only if the transaction itself cannot be safely mapped.
+e.g. CDC => Kafka => Flink, or **any variation of that, because technology doesn't matter at this stage** where CDC would e.g. come from the original transactions table, Kafka serve transport protocol, and Flink consist of mapping business rules.
 
-## ADR Outcome
+I don't know whether human involvement would be needed, but I added that as an option through llm_mapping_suggestions table.
 
-We created an ADR:
+Companies are normalized into companies and linked to their provenance with company_aliases.
 
-`docs/adr/0001-transaction-raw-to-canonical-mapping.md`
+There are also reasons of mapping decisions materialized in groups table. 
 
-It defines a raw-to-canonical mapping workflow with:
+The final result is a canonical transactions table that (supposed to be) served to the API.
 
-- `companies`
-- `company_aliases`
-- `categories`
-- `canonical_transactions`
-- `canonical_transaction_sources`
-- `mapping_runs`
-- `mapping_assumption_groups`
-- `mapping_decisions`
-- `llm_mapping_suggestions`
-- `mapping_exceptions`
+## Omissions
 
-The ADR was adjusted during the chat to avoid implying a rename or replacement of `transactions`. Optional future ingestion metadata was kept separate from the current raw table.
+### API connection
 
-## Mock Implementation
+I haven't actually connected the database to the API. 
 
-We then implemented a hardcoded mock of the ADR workflow in:
+I noticed that there's a parallel llm-generated logic listCleanTransactions that is calculated in realtime during the request that I missed. 
 
-`packages/transactions-clean/src/canonical-materializer.ts`
+Because I don't want to do any commits over 2hr window, I'm leaving it as-is.
 
-and a runnable script:
+### Flow
 
-`packages/transactions-clean/scripts/materialize-canonical-model.mjs`
+Purposely, I decided against writing a programmatic flow that would clean up the data.
 
-This mock intentionally simulates the future LLM-assisted/user-reviewed workflow using deterministic fixture rules for the current dataset. The source file includes a confession comment saying it should be replaced with a proper descriptor-grouping, LLM suggestion, validation, and review workflow before production use.
+That would probably involve LLM calls, strict business rule structure, probably human in the loop with dashboard etc.
 
-The materializer:
+Instead, I asked the agent to simulate such a process by reading the ADR and fill the table manually.
 
-- reads from `transactions`
-- leaves `transactions` unchanged
-- creates/populates canonical and provenance tables
-- stores simulated LLM suggestions and acceptances
-- links all raw rows to canonical transactions
-- records duplicate suppression decisions
-- records parsing/defaulting/provenance decisions
-- skips when the expected materialized state already exists
-- rebuilds if a partial/corrupt materialization is detected
+Then I asked it to hardcode the seed script that would reproduce its thinking process and fill the .db file with cleaned up data.
 
-## Acceptance Checks Performed
-
-We backed up the manually materialized DB, then required the new script to reproduce it exactly.
-
-Checks performed:
-
-- Deleted the generated DB.
-- Re-seeded raw `transactions`.
-- Ran the new materializer.
-- Compared every table against the backup DB.
-- Verified normal rerun is idempotent with `idempotentSkip: true`.
-- Simulated partial completion by deleting 5 `mapping_decisions`.
-- Reran materializer and verified it rebuilt the canonical/provenance tables.
-- Compared rebuilt DB against the backup again.
-- Deleted the backup DB only after passing.
-
-Final materialized counts:
-
-```text
-rawTransactions: 86
-canonicalTransactions: 73
-sourceLinks: 86
-duplicateSources: 13
-companies: 14
-aliases: 29
-llmSuggestions: 14
-acceptedLlmSuggestions: 14
-rejectedLlmSuggestions: 0
-mappingDecisions: 243
-exceptions: 0
+```bash
+pnpm seed # only the original transactions
+pnpm --filter @sofistic/transactions-clean materialize # mapping run
 ```
 
-Verification:
+Reviewing agentic work, I look at the data first. I didn't have enough time to refine the data properly, so it may have insufficiencies.
 
-```text
-typecheck: passed
-tests: passed
-lint: passed with warnings
-```
+![data-view.png](docs/data-view.png)
