@@ -1,0 +1,37 @@
+{
+  "name": "@sofistic/server",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "dev": "tsx --watch src/main.ts",
+    "build": "pnpm -C ../api build && pnpm -C ../transactions-clean build && pnpm -C ../transactions-db build && tsc -b --force tsconfig.json",
+    "start": "node dist/src/main.js",
+    "typecheck": "pnpm -C ../api build && pnpm -C ../transactions-clean build && pnpm -C ../transactions-db build && tsc -p tsconfig.json --noEmit",
+    "test": "vitest run src --config ../../vitest.config.ts --coverage.enabled=false",
+    "test:coverage": "vitest run src --config ../../vitest.config.ts --coverage.enabled=true",
+    "lint": "eslint src && jscpd src",
+    "lint:fix": "eslint src --fix",
+    "format": "eslint src --fix --rule '@effect/dprint: error'",
+    "check-format": "eslint src --rule '@effect/dprint: error'",
+    "circular": "madge --extensions ts --circular src"
+  },
+  "dependencies": {
+    "@effect/platform": "^0.94.2",
+    "@effect/platform-node": "^0.104.1",
+    "@sofistic/api": "workspace:*",
+    "@sofistic/transactions-clean": "workspace:*",
+    "@sofistic/transactions-db": "workspace:*",
+    "effect": "^3.19.15"
+  },
+  "devDependencies": {
+    "tsx": "^4.22.5"
+  }
+}

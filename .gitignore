@@ -1,8 +1,13 @@
 node_modules/
 dist/
 server/data/
+packages/*/dist/
+packages/*/data/
+packages/*/.turbo/
 .turbo/
 .idea/
 coverage/
+packages/*/coverage/
+*.tsbuildinfo
 .DS_Store
 *.log

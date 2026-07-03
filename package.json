@@ -1,16 +1,45 @@
 {
   "name": "sofistic-technical-test",
   "private": true,
-  "workspaces": [
-    "server",
-    "client"
-  ],
+  "type": "module",
+  "packageManager": "pnpm@10.29.3",
   "scripts": {
-    "seed": "npm run seed -w server",
-    "server": "npm run start:dev -w server",
-    "client": "npm run dev -w client"
+    "seed": "pnpm --filter @sofistic/transactions-db seed",
+    "dev": "turbo dev --filter=@sofistic/web --filter=@sofistic/server",
+    "server": "pnpm --filter @sofistic/server dev",
+    "client": "pnpm --filter @sofistic/web dev",
+    "build": "turbo build",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "test:coverage": "turbo test:coverage",
+    "lint": "turbo lint && jscpd packages",
+    "lint:fix": "turbo lint:fix",
+    "format": "turbo format",
+    "check-format": "turbo check-format",
+    "circular": "turbo circular",
+    "check-all": "pnpm build && pnpm typecheck && pnpm lint && pnpm circular && pnpm test"
   },
   "engines": {
     "node": ">=22"
+  },
+  "devDependencies": {
+    "@effect/eslint-plugin": "^0.3.2",
+    "@effect/language-service": "^0.73.1",
+    "@eslint/compat": "^2.0.2",
+    "@types/node": "^22.15.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "@vitest/coverage-v8": "latest",
+    "eslint": "^9.39.2",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-functional": "^9.0.2",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-simple-import-sort": "^12.1.0",
+    "eslint-plugin-sort-destructure-keys": "^2.0.0",
+    "jscpd": "^4.0.8",
+    "madge": "^8.0.0",
+    "turbo": "latest",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.54.0",
+    "vitest": "latest"
   }
 }

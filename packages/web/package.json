@@ -1,0 +1,31 @@
+{
+  "name": "@sofistic/web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run src --config ../../vitest.config.ts --coverage.enabled=false",
+    "test:coverage": "vitest run src --config ../../vitest.config.ts --coverage.enabled=true",
+    "lint": "eslint src && jscpd src",
+    "lint:fix": "eslint src --fix",
+    "format": "eslint src --fix --rule '@effect/dprint: error'",
+    "check-format": "eslint src --rule '@effect/dprint: error'",
+    "circular": "madge --extensions ts,tsx --circular src"
+  },
+  "dependencies": {
+    "@sofistic/api": "workspace:*",
+    "effect": "^3.19.15",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.0.3",
+    "vite": "^8.1.3"
+  }
+}

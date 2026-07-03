@@ -1,0 +1,28 @@
+{
+  "name": "@sofistic/api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b --force tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run src --config ../../vitest.config.ts --coverage.enabled=false",
+    "test:coverage": "vitest run src --config ../../vitest.config.ts --coverage.enabled=true",
+    "lint": "eslint src && jscpd src",
+    "lint:fix": "eslint src --fix",
+    "format": "eslint src --fix --rule '@effect/dprint: error'",
+    "check-format": "eslint src --rule '@effect/dprint: error'",
+    "circular": "madge --extensions ts --circular src"
+  },
+  "dependencies": {
+    "@effect/platform": "^0.94.2",
+    "effect": "^3.19.15"
+  }
+}

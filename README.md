@@ -43,13 +43,35 @@ Using it is optional. If you prefer another stack, go ahead — just use the sam
 Requires **Node 22.13+** (for `node:sqlite`).
 
 ```bash
-npm install
-npm run seed     # creates server/data/app.db from the messy dataset
-npm run server   # Nest API on http://localhost:3000/api
-npm run client   # React app on http://localhost:5173 (separate terminal)
+pnpm install
+pnpm run seed     # creates packages/transactions-db/data/app.db
+pnpm run server   # Effect API on http://localhost:3000/api
+pnpm run client   # React app on http://localhost:5173 (separate terminal)
 ```
 
-`GET /api/health` and the client's health check confirm everything is wired. The rest is yours.
+`GET /api/health` confirms the API is wired; the client fetches `GET /api/transactions` for the feed.
+
+### Package Structure
+
+This repo is organized as a small typed monorepo:
+
+- `packages/api`: frontend/backend interface contracts, route constants, and Effect Schema codecs
+- `packages/transactions-shared`: internal transaction data structures
+- `packages/transactions-clean`: pure transaction cleaning, dedupe, display normalization, and merchant search
+- `packages/transactions-db`: SQLite storage concerns and seed script
+- `packages/server`: Effect HTTP server and package wiring
+- `packages/web`: Vite/React frontend
+
+Useful gates:
+
+```bash
+pnpm run build
+pnpm run typecheck
+pnpm run test
+pnpm run lint
+pnpm run circular
+pnpm run check-all
+```
 
 ## Guidance
 
