@@ -43,6 +43,11 @@ export default [
   {
     ignores: ["**/dist", "**/coverage", "**/node_modules", "**/*.md"]
   },
+  {
+    plugins: {
+      "@effect": effectEslint
+    }
+  },
   ...tseslint.configs.recommended.map((config) => ({
     ...config,
     files: sourceFiles
@@ -54,6 +59,7 @@ export default [
   {
     files: sourceFiles,
     plugins: {
+      "@effect": effectEslint,
       functional,
       import: fixupPluginRules(_import),
       "simple-import-sort": simpleImportSort,

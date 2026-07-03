@@ -24,7 +24,18 @@ mkdirSync(dataDir, { recursive: true })
 const db = new DatabaseSync(dbFile)
 
 db.exec(`
+  DROP TABLE IF EXISTS mapping_exceptions;
+  DROP TABLE IF EXISTS mapping_decisions;
+  DROP TABLE IF EXISTS canonical_transaction_sources;
+  DROP TABLE IF EXISTS canonical_transactions;
+  DROP TABLE IF EXISTS llm_mapping_suggestions;
+  DROP TABLE IF EXISTS company_aliases;
+  DROP TABLE IF EXISTS companies;
+  DROP TABLE IF EXISTS categories;
+  DROP TABLE IF EXISTS mapping_assumption_groups;
+  DROP TABLE IF EXISTS mapping_runs;
   DROP TABLE IF EXISTS transactions;
+
   CREATE TABLE transactions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     external_id TEXT,

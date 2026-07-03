@@ -1,6 +1,6 @@
-import { defaultDatabaseFile, materializeCanonicalTransactionModel } from "../src/canonical-materializer.ts"
+import { defaultDatabaseFile, materializeCanonicalTransactionModel } from "../src/canonical-materializer.ts";
 
-const dbFile = process.argv[2] ?? defaultDatabaseFile()
-const summary = materializeCanonicalTransactionModel(dbFile)
+const dbFile = process.argv[2] ?? defaultDatabaseFile();
+const summary = materializeCanonicalTransactionModel(dbFile);
 
-console.log(JSON.stringify(summary, null, 2))
+console.log(JSON.stringify(summary, null, 2));

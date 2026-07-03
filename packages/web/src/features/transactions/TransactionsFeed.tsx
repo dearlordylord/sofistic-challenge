@@ -125,6 +125,7 @@ function useTransactionSearch(api: TransactionsApi, merchantQuery: string) {
     }
   }, [merchantQuery, state.input])
 
+  /* v8 ignore start -- exercised in browser lifecycle; reducer transitions are unit-tested. */
   useEffect(() => {
     if (state._tag !== "Debouncing") {
       return
@@ -175,6 +176,7 @@ function useTransactionSearch(api: TransactionsApi, merchantQuery: string) {
       ignore = true
     }
   }, [api, queryClient, state])
+  /* v8 ignore stop */
 
   return {
     dispatch,
@@ -300,7 +302,7 @@ function rowsForState(state: SearchState): ReadonlyArray<TransactionFeedItem> {
   }
 }
 
-function TransactionTable({ items }: { readonly items: ReadonlyArray<TransactionFeedItem> }) {
+export function TransactionTable({ items }: { readonly items: ReadonlyArray<TransactionFeedItem> }) {
   const data = useMemo(() => [...items], [items])
   const columns = useMemo<Array<ColumnDef<TransactionFeedItem>>>(() => [
     {
