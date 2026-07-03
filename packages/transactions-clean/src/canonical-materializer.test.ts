@@ -90,6 +90,22 @@ describe("canonical transaction materializer", () => {
     expect(summary.exceptions).toBe(1)
   })
 
+  it("excepts unsupported currencies instead of coercing them to CAD", () => {
+    const dbFile = tempDbFile()
+    withDb(dbFile, (db) => {
+      createRawTable(db)
+      db.prepare(`
+        INSERT INTO transactions (external_id, date, merchant, amount, currency, category)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run("usd_1", "2026-06-18", "STARBUCKS #1042", "-10.00", "USD", "Coffee")
+    })
+
+    const summary = materializeCanonicalTransactionModel(dbFile)
+
+    expect(summary.canonicalTransactions).toBe(0)
+    expect(summary.exceptions).toBe(1)
+  })
+
   it("persists rejected LLM suggestions without creating reusable aliases", () => {
     const dbFile = tempDbFile()
     withDb(dbFile, (db) => {
