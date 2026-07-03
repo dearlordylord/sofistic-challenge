@@ -19,6 +19,7 @@
   "dependencies": {
     "@sofistic/api": "workspace:*",
     "effect": "^3.19.15",
+    "nuqs": "^2.9.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },
