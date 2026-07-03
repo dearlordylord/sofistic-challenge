@@ -102,6 +102,10 @@ importers:
       '@sofistic/transactions-shared':
         specifier: workspace:*
         version: link:../transactions-shared
+    devDependencies:
+      tsx:
+        specifier: ^4.22.5
+        version: 4.23.0
 
   packages/transactions-db:
     dependencies:

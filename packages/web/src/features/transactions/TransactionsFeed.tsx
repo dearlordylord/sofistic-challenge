@@ -8,6 +8,7 @@ import { parseAsString, useQueryState } from "nuqs"
 import { makeTransactionsApi, type TransactionsApi } from "./transactions-api.js"
 
 const MERCHANT_QUERY_PARAM = "merchantQuery"
+const MINOR_UNITS_PER_MAJOR_UNIT = 100
 const SEARCH_DEBOUNCE_MS = 250
 const transactionSearchKey = (query: string): readonly ["transactions", string] => ["transactions", query]
 
@@ -303,7 +304,7 @@ function TransactionTable({ items }: { readonly items: ReadonlyArray<Transaction
   const data = useMemo(() => [...items], [items])
   const columns = useMemo<Array<ColumnDef<TransactionFeedItem>>>(() => [
     {
-      accessorKey: "date",
+      accessorKey: "transactionDate",
       header: "Date"
     },
     {
@@ -315,7 +316,7 @@ function TransactionTable({ items }: { readonly items: ReadonlyArray<Transaction
       header: "Category"
     },
     {
-      cell: ({ row }) => formatMoney(row.original.amount, row.original.currency),
+      cell: ({ row }) => formatMoney(row.original.amountMinor, row.original.currency),
       header: "Amount",
       id: "amount",
       meta: {
@@ -382,7 +383,8 @@ function normalizeQuery(query: string): string {
   return query.trim()
 }
 
-function formatMoney(amount: number, currency: string): string {
+function formatMoney(amountMinor: string, currency: string): string {
+  const amount = Number.parseInt(amountMinor, 10) / MINOR_UNITS_PER_MAJOR_UNIT
   return new Intl.NumberFormat("en-CA", {
     currency,
     style: "currency"

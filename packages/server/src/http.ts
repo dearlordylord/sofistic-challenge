@@ -6,6 +6,8 @@ import { SofisticHttpApi } from "@sofistic/api"
 import { listCleanTransactions } from "@sofistic/transactions-clean"
 import { TransactionRepositoryService } from "@sofistic/transactions-db"
 
+import { toTransactionFeedItem } from "./feed-mapping.js"
+
 const transactionsGroupLive = HttpApiBuilder.group(SofisticHttpApi, "transactions", (handlers) =>
   handlers
     .handle("health", () =>
@@ -22,14 +24,7 @@ const transactionsGroupLive = HttpApiBuilder.group(SofisticHttpApi, "transaction
       Effect.gen(function*() {
         const repository = yield* TransactionRepositoryService
         const rows = yield* repository.findAll
-        const items = listCleanTransactions(rows, urlParams.q ?? "").map((transaction) => ({
-          amount: transaction.amount,
-          category: transaction.category,
-          currency: transaction.currency,
-          date: transaction.date,
-          id: transaction.id,
-          merchant: transaction.merchant
-        }))
+        const items = listCleanTransactions(rows, urlParams.merchantQuery ?? "").map(toTransactionFeedItem)
         return { items } satisfies TransactionsResponse
       }).pipe(Effect.catchAll(storageFailure))))
 

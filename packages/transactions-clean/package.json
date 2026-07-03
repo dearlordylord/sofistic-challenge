@@ -12,16 +12,20 @@
   },
   "scripts": {
     "build": "pnpm -C ../transactions-shared build && tsc -b --force tsconfig.json",
+    "materialize": "tsx scripts/materialize-canonical-model.mjs",
     "typecheck": "pnpm -C ../transactions-shared build && tsc -p tsconfig.json --noEmit",
     "test": "vitest run src --config ../../vitest.config.ts --coverage.enabled=false",
     "test:coverage": "vitest run src --config ../../vitest.config.ts --coverage.enabled=true",
-    "lint": "eslint src && jscpd src",
-    "lint:fix": "eslint src --fix",
-    "format": "eslint src --fix --rule '@effect/dprint: error'",
-    "check-format": "eslint src --rule '@effect/dprint: error'",
+    "lint": "eslint src scripts && jscpd src",
+    "lint:fix": "eslint src scripts --fix",
+    "format": "eslint src scripts --fix --rule '@effect/dprint: error'",
+    "check-format": "eslint src scripts --rule '@effect/dprint: error'",
     "circular": "madge --extensions ts --circular src"
   },
   "dependencies": {
     "@sofistic/transactions-shared": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.22.5"
   }
 }

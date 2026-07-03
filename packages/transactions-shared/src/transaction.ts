@@ -25,14 +25,14 @@ export const StoredRawTransaction = Schema.Struct({
 export type StoredRawTransaction = Schema.Schema.Type<typeof StoredRawTransaction>
 
 export type CleanTransaction = {
-  readonly amount: number
+  readonly amountMinor: string
   readonly category: string
-  readonly currency: string
-  readonly date: string
+  readonly currency: "CAD"
   readonly dedupeKey: string
   readonly id: string
   readonly merchant: string
   readonly sourceRowId: number
+  readonly transactionDate: string
 }
 
 export type TransactionSearch = {

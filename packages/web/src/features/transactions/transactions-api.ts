@@ -12,7 +12,7 @@ export function makeTransactionsApi(fetchImpl: typeof fetch = fetch): Transactio
       const search = new URLSearchParams()
       const trimmed = query.trim()
       if (trimmed !== "") {
-        search.set("q", trimmed)
+        search.set("merchantQuery", trimmed)
       }
 
       const url = search.size === 0 ? apiRoutes.transactions : `${apiRoutes.transactions}?${search.toString()}`

@@ -38,9 +38,20 @@ This repo is a ready-to-go starting point: **NestJS + TypeScript + SQLite** on t
 
 Using it is optional. If you prefer another stack, go ahead — just use the same seed data (`server/seed/transactions.json`) and include clear run instructions.
 
+### Runtime
+
+Requires **Node 22.13+** for `node:sqlite`. The repo includes `.nvmrc` and `.node-version` pinned to `22.13.0` for Node version managers.
+
+Use `pnpm` through the pinned package manager declaration in `package.json`:
+
+```bash
+corepack enable
+corepack pnpm install
+```
+
 ### Quickstart
 
-Requires **Node 22.13+** (for `node:sqlite`).
+After selecting Node 22.13+:
 
 ```bash
 pnpm install

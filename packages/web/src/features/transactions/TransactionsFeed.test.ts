@@ -8,21 +8,21 @@ const FIRST_REQUEST_ID = 1
 const SECOND_REQUEST_ID = 2
 
 const amazonTransaction: TransactionFeedItem = {
-  amount: -103.48,
+  amountMinor: "-10348",
   category: "Shopping",
   currency: "CAD",
-  date: "2026-05-20",
-  id: "tx_1004",
-  merchant: "Amazon"
+  id: "ctx-amazon",
+  merchant: "Amazon",
+  transactionDate: "2026-05-20"
 }
 
 const shellTransaction: TransactionFeedItem = {
-  amount: -54.12,
+  amountMinor: "-5412",
   category: "Fuel",
   currency: "CAD",
-  date: "2026-05-19",
-  id: "tx_1005",
-  merchant: "Shell"
+  id: "ctx-shell",
+  merchant: "Shell",
+  transactionDate: "2026-05-19"
 }
 
 describe("transaction search state machine", () => {
