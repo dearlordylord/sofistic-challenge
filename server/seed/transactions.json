@@ -1,0 +1,690 @@
+[
+  {
+    "external_id": "tx_1005",
+    "date": "2026-06-18",
+    "merchant": "NETFLIX.COM",
+    "amount": -17.98,
+    "currency": "cad",
+    "category": "subscriptions"
+  },
+  {
+    "external_id": "tx_1024",
+    "date": "2026-05-30",
+    "merchant": "UBER *TRIP",
+    "amount": "-11.74",
+    "currency": "cad",
+    "category": "Transport"
+  },
+  {
+    "external_id": "tx_1056",
+    "date": "16 Apr 2026",
+    "merchant": "UBER EATS",
+    "amount": "-30.88",
+    "currency": null,
+    "category": "Food Delivery"
+  },
+  {
+    "external_id": "tx_1023",
+    "date": "2026-04-03",
+    "merchant": "LOBLAWS #1123",
+    "amount": -200.85,
+    "currency": "cad",
+    "category": "groceries"
+  },
+  {
+    "external_id": "tx_1018",
+    "date": "2026-04-23",
+    "merchant": "Apple.com/bill ON",
+    "amount": "-2.63",
+    "currency": "cad",
+    "category": "subscriptions"
+  },
+  {
+    "external_id": "tx_1020",
+    "date": "01/06/2026",
+    "merchant": "SHELL EASYPAY",
+    "amount": -73.62,
+    "currency": "CAD",
+    "category": "gas"
+  },
+  {
+    "external_id": "tx_1021",
+    "date": "07 Apr 2026",
+    "merchant": "AMAZON.CA TORONTO ON",
+    "amount": -161.17,
+    "currency": "CAD",
+    "category": "Shopping"
+  },
+  {
+    "external_id": "tx_1017",
+    "date": "2026-06-04",
+    "merchant": "UBER *TRIP",
+    "amount": "-42.82",
+    "currency": "CAD",
+    "category": null
+  },
+  {
+    "external_id": "tx_1042",
+    "date": "2026-06-18T00:00:00.000Z",
+    "merchant": "STARBUCKS #1042",
+    "amount": "-12.09",
+    "currency": "CAD",
+    "category": "Coffee"
+  },
+  {
+    "external_id": "tx_1066",
+    "date": "2026-05-11",
+    "merchant": "Shell",
+    "amount": "-47.95",
+    "currency": "cad",
+    "category": "Gas"
+  },
+  {
+    "external_id": "tx_1012",
+    "date": "10 Jun 2026",
+    "merchant": "STARBUCKS #1042",
+    "amount": -10.7,
+    "currency": "CAD",
+    "category": "Coffee"
+  },
+  {
+    "external_id": "tx_1038",
+    "date": "2026-06-16",
+    "merchant": "Apple.com/bill ON",
+    "amount": -6.75,
+    "currency": "CAD",
+    "category": "subscriptions"
+  },
+  {
+    "external_id": "tx_1027",
+    "date": "04/05/2026",
+    "merchant": "SHELL C41235",
+    "amount": -36.1,
+    "currency": "CAD",
+    "category": "Gas"
+  },
+  {
+    "external_id": "tx_1041",
+    "date": "09/04/2026",
+    "merchant": "IKEA NORTH YORK",
+    "amount": -392.07,
+    "currency": "CAD",
+    "category": "Home"
+  },
+  {
+    "external_id": "tx_1052",
+    "date": "2026-05-15T00:00:00.000Z",
+    "merchant": "NETFLIX.COM",
+    "amount": -22.94,
+    "currency": "CAD",
+    "category": ""
+  },
+  {
+    "external_id": null,
+    "date": "2026-06-11",
+    "merchant": "INTERAC E-TRF",
+    "amount": "-120.00",
+    "currency": null,
+    "category": null
+  },
+  {
+    "external_id": "tx_1061",
+    "date": "17 May 2026",
+    "merchant": "PIZZAIOLO GERRARD",
+    "amount": "-47.69",
+    "currency": null,
+    "category": "Restaurants"
+  },
+  {
+    "external_id": "tx_1040",
+    "date": "12 Apr 2026",
+    "merchant": "SHELL C41235",
+    "amount": -79.87,
+    "currency": "CAD",
+    "category": null
+  },
+  {
+    "external_id": "tx_1046",
+    "date": "2026-05-06T00:00:00.000Z",
+    "merchant": "Netflix",
+    "amount": -17.07,
+    "currency": "CAD",
+    "category": "Subscriptions"
+  },
+  {
+    "external_id": "tx_1068",
+    "date": "2026-04-15",
+    "merchant": "PAYROLL DEPOSIT - SOFISTIC AI",
+    "amount": 4250,
+    "currency": "CAD",
+    "category": "Income"
+  },
+  {
+    "external_id": "tx_1010",
+    "date": "2026-06-04",
+    "merchant": "Spotify P22E9F1D2A",
+    "amount": -11.63,
+    "currency": "CAD",
+    "category": "Subscriptions"
+  },
+  {
+    "external_id": "tx_1045",
+    "date": "14 Jun 2026",
+    "merchant": "APPLE.COM/BILL",
+    "amount": -1.41,
+    "currency": "CAD",
+    "category": "Subscriptions"
+  },
+  {
+    "external_id": "tx_1008",
+    "date": "07/04/2026",
+    "merchant": "Netflix",
+    "amount": "-17.18",
+    "currency": "CAD",
+    "category": "Subscriptions"
+  },
+  {
+    "external_id": "tx_1035",
+    "date": "23 May 2026",
+    "merchant": "LOBLAWS #1123",
+    "amount": -185.1,
+    "currency": "CAD",
+    "category": "Groceries"
+  },
+  {
+    "external_id": "tx_1061",
+    "date": "17 May 2026",
+    "merchant": "PIZZAIOLO GERRARD",
+    "amount": "-47.69",
+    "currency": null,
+    "category": "Restaurants"
+  },
+  {
+    "external_id": "tx_1014",
+    "date": "09 May 2026",
+    "merchant": "SPOTIFY",
+    "amount": "-11.95",
+    "currency": "CAD",
+    "category": "Subscriptions"
+  },
+  {
+    "external_id": "tx_1003",
+    "date": "29/04/2026",
+    "merchant": "SQ *STARBUCKS TORONTO",
+    "amount": "-10.50",
+    "currency": "CAD",
+    "category": "coffee"
+  },
+  {
+    "external_id": "tx_1054",
+    "date": "19 Jun 2026",
+    "merchant": "Uber BV",
+    "amount": -24.22,
+    "currency": "CAD",
+    "category": "Transport"
+  },
+  {
+    "external_id": "tx_1013",
+    "date": "06/04/2026",
+    "merchant": "NETFLIX.COM",
+    "amount": -23.33,
+    "currency": "cad",
+    "category": "Subscriptions"
+  },
+  {
+    "external_id": "tx_1026",
+    "date": "2026-05-05T00:00:00.000Z",
+    "merchant": "Loblaws",
+    "amount": "-23.09",
+    "currency": "CAD",
+    "category": null
+  },
+  {
+    "external_id": "tx_1047",
+    "date": "2026-05-06",
+    "merchant": "SQ *STARBUCKS TORONTO",
+    "amount": -9.73,
+    "currency": "CAD",
+    "category": "coffee"
+  },
+  {
+    "external_id": "tx_1027",
+    "date": "04/05/2026",
+    "merchant": "SHELL C41235",
+    "amount": -36.1,
+    "currency": "CAD",
+    "category": "Gas"
+  },
+  {
+    "external_id": "tx_1027",
+    "date": "04/05/2026",
+    "merchant": "SHELL C41235",
+    "amount": -36.1,
+    "currency": "CAD",
+    "category": "Gas"
+  },
+  {
+    "external_id": "tx_1040",
+    "date": "12/04/2026",
+    "merchant": "SHELL EASYPAY",
+    "amount": -79.87,
+    "currency": "CAD",
+    "category": null
+  },
+  {
+    "external_id": "tx_1067",
+    "date": "2026-05-31",
+    "merchant": "Uber BV",
+    "amount": -41.66,
+    "currency": "CAD",
+    "category": "Transport"
+  },
+  {
+    "external_id": "tx_1063",
+    "date": "12 Apr 2026",
+    "merchant": "Apple.com/bill ON",
+    "amount": "-13.52",
+    "currency": "CAD",
+    "category": null
+  },
+  {
+    "external_id": "tx_1055",
+    "date": "04 Jun 2026",
+    "merchant": "Apple.com/bill ON",
+    "amount": -16.83,
+    "currency": "CAD",
+    "category": "Subscriptions"
+  },
+  {
+    "external_id": "tx_1044",
+    "date": "27 Apr 2026",
+    "merchant": "amazon.ca",
+    "amount": -63.4,
+    "currency": "CAD",
+    "category": null
+  },
+  {
+    "external_id": "tx_1002",
+    "date": "2026-06-11",
+    "merchant": "Ikea Canada",
+    "amount": -188.72,
+    "currency": "CAD",
+    "category": "Home"
+  },
+  {
+    "external_id": "tx_1065",
+    "date": "20/05/2026",
+    "merchant": "Spotify P22E9F1D2A",
+    "amount": -11.8,
+    "currency": "CAD",
+    "category": "Subscriptions"
+  },
+  {
+    "external_id": "tx_1031",
+    "date": "02 Jun 2026",
+    "merchant": "LOBLAWS CITY MARKET",
+    "amount": "-201.20",
+    "currency": "CAD",
+    "category": "Groceries"
+  },
+  {
+    "external_id": "tx_1034",
+    "date": "23/04/2026",
+    "merchant": "PIZZAIOLO GERRARD",
+    "amount": -35.82,
+    "currency": "CAD",
+    "category": "Restaurants"
+  },
+  {
+    "external_id": "tx_1028",
+    "date": "14 Jun 2026",
+    "merchant": "Netflix",
+    "amount": -17.87,
+    "currency": "CAD",
+    "category": null
+  },
+  {
+    "external_id": "tx_1022",
+    "date": "04/05/2026",
+    "merchant": "amazon.ca",
+    "amount": "-76.85",
+    "currency": "CAD",
+    "category": "Shopping"
+  },
+  {
+    "external_id": "tx_1058",
+    "date": "04/06/2026",
+    "merchant": "IKEA NORTH YORK",
+    "amount": -162.28,
+    "currency": null,
+    "category": "Home"
+  },
+  {
+    "external_id": "tx_1055",
+    "date": "2026-06-04",
+    "merchant": "Apple.com/bill ON",
+    "amount": -16.83,
+    "currency": "CAD",
+    "category": "Subscriptions"
+  },
+  {
+    "external_id": "tx_1037",
+    "date": "2026-04-30",
+    "merchant": "UBER EATS",
+    "amount": -32.57,
+    "currency": "CAD",
+    "category": "food delivery"
+  },
+  {
+    "external_id": "tx_1004",
+    "date": "20 May 2026",
+    "merchant": "AMAZON.CA TORONTO ON",
+    "amount": -103.48,
+    "currency": "CAD",
+    "category": "Shopping"
+  },
+  {
+    "external_id": "tx_1000",
+    "date": "15/05/2026",
+    "merchant": "SPOTIFY",
+    "amount": -11.91,
+    "currency": null,
+    "category": "Subscriptions"
+  },
+  {
+    "external_id": "tx_1048",
+    "date": "08 Apr 2026",
+    "merchant": "SHELL EASYPAY",
+    "amount": -53.74,
+    "currency": "CAD",
+    "category": "Gas"
+  },
+  {
+    "external_id": "tx_1025",
+    "date": "11/06/2026",
+    "merchant": "Starbucks Coffee",
+    "amount": -11.47,
+    "currency": "CAD",
+    "category": "Coffee"
+  },
+  {
+    "external_id": "tx_1062",
+    "date": "2026-06-12",
+    "merchant": "UBER CANADA/UBERTRIP",
+    "amount": -23.94,
+    "currency": "CAD",
+    "category": "Transport"
+  },
+  {
+    "external_id": "tx_1043",
+    "date": "03 Jun 2026",
+    "merchant": "Loblaws",
+    "amount": -209.78,
+    "currency": "CAD",
+    "category": "Groceries"
+  },
+  {
+    "external_id": "tx_1024",
+    "date": "30/05/2026",
+    "merchant": "UBER *TRIP",
+    "amount": "-11.74",
+    "currency": "cad",
+    "category": "Transport"
+  },
+  {
+    "external_id": "tx_1022",
+    "date": "04/05/2026",
+    "merchant": "amazon.ca",
+    "amount": "-76.85",
+    "currency": "CAD",
+    "category": "Shopping"
+  },
+  {
+    "external_id": "tx_1006",
+    "date": "19/06/2026",
+    "merchant": "Starbucks Coffee",
+    "amount": -6.41,
+    "currency": "CAD",
+    "category": "Coffee"
+  },
+  {
+    "external_id": "tx_1019",
+    "date": "2026-04-07T00:00:00.000Z",
+    "merchant": "IKEA NORTH YORK",
+    "amount": "-285.27",
+    "currency": "CAD",
+    "category": "Home"
+  },
+  {
+    "external_id": "tx_1015",
+    "date": "2026-05-14T00:00:00.000Z",
+    "merchant": "Netflix",
+    "amount": "-18.62",
+    "currency": "CAD",
+    "category": null
+  },
+  {
+    "external_id": "tx_1057",
+    "date": "17/04/2026",
+    "merchant": "NETFLIX.COM",
+    "amount": -21.76,
+    "currency": "CAD",
+    "category": "Subscriptions"
+  },
+  {
+    "external_id": "tx_1053",
+    "date": "2026-04-16",
+    "merchant": "STARBUCKS #1042",
+    "amount": -7.55,
+    "currency": null,
+    "category": "coffee"
+  },
+  {
+    "external_id": null,
+    "date": "2026-05-03",
+    "merchant": "  LOBLAWS #1123  ",
+    "amount": -54.2,
+    "currency": "CAD",
+    "category": "Groceries"
+  },
+  {
+    "external_id": "tx_1030",
+    "date": "2026-04-15",
+    "merchant": "Loblaws",
+    "amount": -79.2,
+    "currency": "CAD",
+    "category": "Groceries"
+  },
+  {
+    "external_id": "tx_1036",
+    "date": "2026-04-12",
+    "merchant": "PIZZAIOLO GERRARD",
+    "amount": -42.79,
+    "currency": "CAD",
+    "category": "restaurants"
+  },
+  {
+    "external_id": "tx_1060",
+    "date": "21 Jun 2026",
+    "merchant": "APPLE.COM/BILL",
+    "amount": -23.44,
+    "currency": "CAD",
+    "category": "Subscriptions"
+  },
+  {
+    "external_id": "tx_1009",
+    "date": "2026-05-24T00:00:00.000Z",
+    "merchant": "TIM HORTONS QPS TORONTO",
+    "amount": "-6.16",
+    "currency": "CAD",
+    "category": "Coffee"
+  },
+  {
+    "external_id": "tx_1007",
+    "date": "08 Apr 2026",
+    "merchant": "LOBLAWS #1123",
+    "amount": "-80.73",
+    "currency": "CAD",
+    "category": "Groceries"
+  },
+  {
+    "external_id": "tx_1033",
+    "date": "2026-04-06",
+    "merchant": "Loblaws",
+    "amount": -161.47,
+    "currency": "cad",
+    "category": null
+  },
+  {
+    "external_id": "tx_1011",
+    "date": "23 Jun 2026",
+    "merchant": "UBER *EATS PENDING",
+    "amount": -56.72,
+    "currency": "CAD",
+    "category": null
+  },
+  {
+    "external_id": "tx_1032",
+    "date": "16/06/2026",
+    "merchant": "Starbucks Coffee",
+    "amount": -10.25,
+    "currency": "CAD",
+    "category": "coffee"
+  },
+  {
+    "external_id": "tx_1009",
+    "date": "2026-05-24T00:00:00.000Z",
+    "merchant": "TIM HORTONS QPS TORONTO",
+    "amount": "-6.16",
+    "currency": "CAD",
+    "category": "Coffee"
+  },
+  {
+    "external_id": "tx_1046",
+    "date": "2026-05-06T00:00:00.000Z",
+    "merchant": "Netflix",
+    "amount": -17.07,
+    "currency": "CAD",
+    "category": "Subscriptions"
+  },
+  {
+    "external_id": "tx_1034",
+    "date": "23/04/2026",
+    "merchant": "PIZZAIOLO GERRARD",
+    "amount": -35.82,
+    "currency": "CAD",
+    "category": "Restaurants"
+  },
+  {
+    "external_id": "tx_1049",
+    "date": "29 Apr 2026",
+    "merchant": "UBER CANADA/UBERTRIP",
+    "amount": -12.9,
+    "currency": "cad",
+    "category": "Transport"
+  },
+  {
+    "external_id": "tx_1001",
+    "date": "2026-04-25T00:00:00.000Z",
+    "merchant": "UBER *TRIP",
+    "amount": -44.89,
+    "currency": "CAD",
+    "category": "Transport"
+  },
+  {
+    "external_id": "tx_1059",
+    "date": "2026-06-04T00:00:00.000Z",
+    "merchant": "Ikea Canada",
+    "amount": -312.93,
+    "currency": "CAD",
+    "category": "Home"
+  },
+  {
+    "external_id": "tx_1012",
+    "date": "10/06/2026",
+    "merchant": "SQ *STARBUCKS TORONTO",
+    "amount": -10.7,
+    "currency": "CAD",
+    "category": "Coffee"
+  },
+  {
+    "external_id": "tx_1069",
+    "date": "2026-05-15",
+    "merchant": "PAYROLL DEPOSIT - SOFISTIC AI",
+    "amount": 4250,
+    "currency": "CAD",
+    "category": "Income"
+  },
+  {
+    "external_id": "tx_1050",
+    "date": "07/06/2026",
+    "merchant": "IKEA NORTH YORK",
+    "amount": -138.09,
+    "currency": "CAD",
+    "category": "Home"
+  },
+  {
+    "external_id": "tx_1064",
+    "date": "16 Jun 2026",
+    "merchant": "SPOTIFY",
+    "amount": "-11.10",
+    "currency": "CAD",
+    "category": "Subscriptions"
+  },
+  {
+    "external_id": "tx_1053",
+    "date": "2026-04-16",
+    "merchant": "STARBUCKS #1042",
+    "amount": -7.55,
+    "currency": null,
+    "category": "coffee"
+  },
+  {
+    "external_id": "tx_1016",
+    "date": "2026-04-25",
+    "merchant": "Shell",
+    "amount": -75.98,
+    "currency": "CAD",
+    "category": "gas"
+  },
+  {
+    "external_id": "tx_1034",
+    "date": "23/04/2026",
+    "merchant": "PIZZAIOLO GERRARD",
+    "amount": -35.82,
+    "currency": "CAD",
+    "category": "Restaurants"
+  },
+  {
+    "external_id": "tx_1070",
+    "date": "2026-06-15",
+    "merchant": "PAYROLL DEPOSIT - SOFISTIC AI",
+    "amount": 4250,
+    "currency": "CAD",
+    "category": "Income"
+  },
+  {
+    "external_id": "tx_1051",
+    "date": "21 Jun 2026",
+    "merchant": "Uber BV",
+    "amount": -19.46,
+    "currency": "CAD",
+    "category": "transport"
+  },
+  {
+    "external_id": "tx_1039",
+    "date": "2026-04-22T00:00:00.000Z",
+    "merchant": "PIZZAIOLO",
+    "amount": -26.01,
+    "currency": "CAD",
+    "category": "Restaurants"
+  },
+  {
+    "external_id": "tx_1029",
+    "date": "30/05/2026",
+    "merchant": "Spotify P22E9F1D2A",
+    "amount": "-11.96",
+    "currency": "CAD",
+    "category": null
+  }
+]

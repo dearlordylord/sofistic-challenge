@@ -1,0 +1,8 @@
+node_modules/
+dist/
+server/data/
+.turbo/
+.idea/
+coverage/
+.DS_Store
+*.log
