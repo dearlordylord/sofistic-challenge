@@ -1,24 +1,38 @@
-import type { CleanTransaction, StoredRawTransaction } from "@sofistic/transactions-shared"
+import {
+  AmountMinor,
+  CanonicalTransactionId,
+  CategoryDisplayName,
+  type CleanTransaction,
+  type Currency,
+  DedupeKey,
+  isIsoCalendarDate,
+  isSafeAmountMinor,
+  MerchantDisplayName,
+  type MerchantSearchQuery,
+  type RawAmountValue,
+  type StoredRawTransaction,
+  TransactionDate
+} from "@sofistic/transactions-shared"
 
-const DEFAULT_CURRENCY = "CAD"
-const DEFAULT_CATEGORY = "Uncategorized"
+const DEFAULT_CURRENCY: Currency = "CAD"
+const DEFAULT_CATEGORY = CategoryDisplayName.make("Uncategorized")
 const MINOR_UNITS_PER_MAJOR_UNIT = 100
 const ISO_DATE_LENGTH = 10
 const MIN_SLASH_DATE_PARTS = 3
 
 const merchantAliases: ReadonlyArray<{
-  readonly display: string
+  readonly display: MerchantDisplayName
   readonly needles: ReadonlyArray<string>
 }> = [
-  { display: "Amazon", needles: ["AMAZON", "AMZN"] },
-  { display: "Apple", needles: ["APPLE"] },
-  { display: "Loblaws", needles: ["LOBLAWS"] },
-  { display: "Netflix", needles: ["NETFLIX"] },
-  { display: "Shell", needles: ["SHELL"] },
-  { display: "Starbucks", needles: ["STARBUCKS"] },
-  { display: "Tim Hortons", needles: ["TIM HORTONS", "TIMHORTONS"] },
-  { display: "Uber Eats", needles: ["UBER EATS"] },
-  { display: "Uber", needles: ["UBER"] }
+  { display: MerchantDisplayName.make("Amazon"), needles: ["AMAZON", "AMZN"] },
+  { display: MerchantDisplayName.make("Apple"), needles: ["APPLE"] },
+  { display: MerchantDisplayName.make("Loblaws"), needles: ["LOBLAWS"] },
+  { display: MerchantDisplayName.make("Netflix"), needles: ["NETFLIX"] },
+  { display: MerchantDisplayName.make("Shell"), needles: ["SHELL"] },
+  { display: MerchantDisplayName.make("Starbucks"), needles: ["STARBUCKS"] },
+  { display: MerchantDisplayName.make("Tim Hortons"), needles: ["TIM HORTONS", "TIMHORTONS"] },
+  { display: MerchantDisplayName.make("Uber Eats"), needles: ["UBER EATS"] },
+  { display: MerchantDisplayName.make("Uber"), needles: ["UBER"] }
 ]
 
 const monthNumbers = new Map([
@@ -38,9 +52,9 @@ const monthNumbers = new Map([
 
 export function listCleanTransactions(
   rows: ReadonlyArray<StoredRawTransaction>,
-  searchQuery: string
+  searchQuery: MerchantSearchQuery | ""
 ): ReadonlyArray<CleanTransaction> {
-  const byDedupeKey = new Map<string, CleanTransaction>()
+  const byDedupeKey = new Map<DedupeKey, CleanTransaction>()
 
   for (const row of rows) {
     const transaction = cleanTransaction(row)
@@ -69,21 +83,21 @@ export function cleanTransaction(row: StoredRawTransaction): CleanTransaction | 
     return null
   }
 
-  const dedupeKey = `${date}|${merchant.toLocaleUpperCase()}|${amountMinor}|${currency}`
+  const dedupeKey = DedupeKey.make(`${date}|${merchant.toLocaleUpperCase()}|${amountMinor}|${currency}`)
 
   return {
     amountMinor,
     category,
     currency,
     dedupeKey,
-    id: `ctx-${stableId(dedupeKey)}`,
+    id: CanonicalTransactionId.make(`ctx-${stableId(dedupeKey)}`),
     merchant,
     sourceRowId: row.id,
     transactionDate: date
   }
 }
 
-export function normalizeMerchant(rawMerchant: string | null): string | null {
+export function normalizeMerchant(rawMerchant: string | null): MerchantDisplayName | null {
   if (rawMerchant === null) return null
 
   const compact = rawMerchant
@@ -100,10 +114,11 @@ export function normalizeMerchant(rawMerchant: string | null): string | null {
     }
   }
 
-  return titleCase(compact.replaceAll(/\b(ON|CA|CANADA|TORONTO)\b/g, "").trim())
+  const fallback = titleCase(compact.replaceAll(/\b(ON|CA|CANADA|TORONTO)\b/g, "").trim())
+  return fallback === "" ? null : MerchantDisplayName.make(fallback)
 }
 
-function parseAmountMinor(rawAmount: number | string | null): string | null {
+function parseAmountMinor(rawAmount: RawAmountValue): AmountMinor | null {
   if (rawAmount === null) return null
   const amount = typeof rawAmount === "number" ? rawAmount.toString() : rawAmount.trim()
   if (amount === "") return null
@@ -118,10 +133,11 @@ function parseAmountMinor(rawAmount: number | string | null): string | null {
 
   const cents = BigInt(major) * BigInt(MINOR_UNITS_PER_MAJOR_UNIT)
     + BigInt(fractional.padEnd(2, "0"))
-  return (sign * cents).toString()
+  const amountMinor = (sign * cents).toString()
+  return isSafeAmountMinor(amountMinor) ? AmountMinor.make(amountMinor) : null
 }
 
-function parseDate(rawDate: string | null): string | null {
+function parseDate(rawDate: string | null): TransactionDate | null {
   if (rawDate === null) return null
   const value = rawDate.trim()
   if (value === "") return null
@@ -135,12 +151,12 @@ function parseDate(rawDate: string | null): string | null {
   return parseSlashDate(value)
 }
 
-function parseIsoDate(value: string): string | null {
+function parseIsoDate(value: string): TransactionDate | null {
   const dateOnly = value.slice(0, ISO_DATE_LENGTH)
-  return /^\d{4}-\d{2}-\d{2}$/.test(dateOnly) ? dateOnly : null
+  return isIsoCalendarDate(dateOnly) ? TransactionDate.make(dateOnly) : null
 }
 
-function parseNamedMonthDate(value: string): string | null {
+function parseNamedMonthDate(value: string): TransactionDate | null {
   const parts = value.split(/\s+/)
   if (parts.length !== MIN_SLASH_DATE_PARTS) return null
 
@@ -155,7 +171,7 @@ function parseNamedMonthDate(value: string): string | null {
   return formatDateParts(yearText, month, dayText)
 }
 
-function parseSlashDate(value: string): string | null {
+function parseSlashDate(value: string): TransactionDate | null {
   const parts = value.split("/")
   if (parts.length !== MIN_SLASH_DATE_PARTS) return null
 
@@ -167,7 +183,7 @@ function parseSlashDate(value: string): string | null {
   return formatDateParts(yearText, monthText, dayText)
 }
 
-function formatDateParts(yearText: string, monthText: string, dayText: string): string | null {
+function formatDateParts(yearText: string, monthText: string, dayText: string): TransactionDate | null {
   const year = Number.parseInt(yearText, 10)
   const month = Number.parseInt(monthText, 10)
   const day = Number.parseInt(dayText, 10)
@@ -175,18 +191,21 @@ function formatDateParts(yearText: string, monthText: string, dayText: string): 
   if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return null
   if (year < 1900 || month < 1 || month > 12 || day < 1 || day > 31) return null
 
-  return `${year.toString().padStart(4, "0")}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`
+  const date = `${year.toString().padStart(4, "0")}-${month.toString().padStart(2, "0")}-${
+    day.toString().padStart(2, "0")
+  }`
+  return isIsoCalendarDate(date) ? TransactionDate.make(date) : null
 }
 
-function normalizeCurrency(rawCurrency: string | null): "CAD" | null {
+function normalizeCurrency(rawCurrency: string | null): Currency | null {
   const currency = rawCurrency?.trim().toLocaleUpperCase()
   if (currency === undefined || currency === "") return DEFAULT_CURRENCY
   return currency === DEFAULT_CURRENCY ? DEFAULT_CURRENCY : null
 }
 
-function normalizeCategory(rawCategory: string | null): string {
+function normalizeCategory(rawCategory: string | null): CategoryDisplayName {
   const category = rawCategory?.trim()
-  return category === undefined || category === "" ? DEFAULT_CATEGORY : titleCase(category)
+  return category === undefined || category === "" ? DEFAULT_CATEGORY : CategoryDisplayName.make(titleCase(category))
 }
 
 function titleCase(value: string): string {
@@ -198,7 +217,7 @@ function titleCase(value: string): string {
     .join(" ")
 }
 
-function matchesSearch(transaction: CleanTransaction, searchQuery: string): boolean {
+function matchesSearch(transaction: CleanTransaction, searchQuery: MerchantSearchQuery | ""): boolean {
   const query = searchQuery.trim().toLocaleUpperCase()
   return query === "" || transaction.merchant.toLocaleUpperCase().includes(query)
 }

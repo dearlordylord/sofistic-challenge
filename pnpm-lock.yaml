@@ -89,6 +89,9 @@ importers:
       '@sofistic/transactions-db':
         specifier: workspace:*
         version: link:../transactions-db
+      '@sofistic/transactions-shared':
+        specifier: workspace:*
+        version: link:../transactions-shared
       effect:
         specifier: ^3.19.15
         version: 3.21.4

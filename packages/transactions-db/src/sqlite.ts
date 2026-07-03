@@ -1,10 +1,10 @@
 import { Context, Effect, Layer, Schema } from "effect"
 import { DatabaseSync } from "node:sqlite"
 
-import { StoredRawTransaction } from "@sofistic/transactions-shared"
+import { StoredRawTransaction, TransactionCount } from "@sofistic/transactions-shared"
 
 const CountRow = Schema.Struct({
-  count: Schema.Number
+  count: TransactionCount
 })
 
 const StoredRawTransactionList = Schema.Array(StoredRawTransaction)
@@ -18,7 +18,7 @@ export class TransactionStorageError extends Error {
 }
 
 export type TransactionRepository = {
-  readonly count: Effect.Effect<number, TransactionStorageError>
+  readonly count: Effect.Effect<TransactionCount, TransactionStorageError>
   readonly findAll: Effect.Effect<ReadonlyArray<StoredRawTransaction>, TransactionStorageError>
 }
 

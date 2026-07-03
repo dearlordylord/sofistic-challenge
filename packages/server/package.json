@@ -29,6 +29,7 @@
     "@sofistic/api": "workspace:*",
     "@sofistic/transactions-clean": "workspace:*",
     "@sofistic/transactions-db": "workspace:*",
+    "@sofistic/transactions-shared": "workspace:*",
     "effect": "^3.19.15"
   },
   "devDependencies": {

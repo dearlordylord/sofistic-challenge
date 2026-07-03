@@ -12,12 +12,13 @@
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "test:coverage": "turbo test:coverage",
-    "lint": "turbo lint && jscpd packages",
+    "schema-lint": "node scripts/check-domain-schemas.mjs",
+    "lint": "eslint eslint.config.mjs scripts && turbo lint && jscpd packages scripts",
     "lint:fix": "turbo lint:fix",
     "format": "turbo format",
     "check-format": "turbo check-format",
     "circular": "turbo circular",
-    "check-all": "pnpm build && pnpm typecheck && pnpm lint && pnpm circular && pnpm test"
+    "check-all": "pnpm build && pnpm typecheck && pnpm schema-lint && pnpm lint && pnpm circular && pnpm test"
   },
   "engines": {
     "node": ">=22.13.0"

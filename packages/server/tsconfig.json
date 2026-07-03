@@ -14,6 +14,9 @@
     },
     {
       "path": "../transactions-db"
+    },
+    {
+      "path": "../transactions-shared"
     }
   ],
   "exclude": ["dist", "node_modules"]

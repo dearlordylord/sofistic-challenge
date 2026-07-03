@@ -4,13 +4,28 @@ import { existsSync, mkdirSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
+import {
+  AmountCents,
+  type AssumptionCode,
+  type CategoryId,
+  CompanyDisplayName,
+  CompanyId,
+  type CompanyType,
+  Confidence,
+  type Currency,
+  TransactionCount,
+  TransactionDate,
+  type TransactionDirection,
+  type TransactionStatus
+} from "@sofistic/transactions-shared"
+
 const MAPPING_RUN_ID = "map_run_20260703_simulated_llm_v1"
 const MAPPER_VERSION = "manual-simulation@1"
 const RULESET_VERSION = "adr-0001@1"
 const MOCK_TIMESTAMP = "2026-07-03T15:59:48.349Z"
 const MOCK_FINISHED_AT = "2026-07-03T15:59:48.389Z"
-const DEFAULT_CURRENCY = "CAD"
-const ACCEPTED_LLM_CONFIDENCE = 0.85
+const DEFAULT_CURRENCY: Currency = "CAD"
+const ACCEPTED_LLM_CONFIDENCE = Confidence.make(0.85)
 
 /**
  * Temporary hardcoded materializer for ADR 0001.
@@ -45,18 +60,18 @@ export function defaultDatabaseFile(): string {
 }
 
 export type MaterializationSummary = {
-  readonly acceptedLlmSuggestions: number
-  readonly aliases: number
-  readonly canonicalTransactions: number
-  readonly companies: number
-  readonly duplicateSources: number
-  readonly exceptions: number
+  readonly acceptedLlmSuggestions: TransactionCount
+  readonly aliases: TransactionCount
+  readonly canonicalTransactions: TransactionCount
+  readonly companies: TransactionCount
+  readonly duplicateSources: TransactionCount
+  readonly exceptions: TransactionCount
   readonly idempotentSkip: boolean
-  readonly llmSuggestions: number
-  readonly mappingDecisions: number
-  readonly rawTransactions: number
-  readonly rejectedLlmSuggestions: number
-  readonly sourceLinks: number
+  readonly llmSuggestions: TransactionCount
+  readonly mappingDecisions: TransactionCount
+  readonly rawTransactions: TransactionCount
+  readonly rejectedLlmSuggestions: TransactionCount
+  readonly sourceLinks: TransactionCount
 }
 
 type RawRow = {
@@ -86,26 +101,26 @@ type MappingRunRow = {
 }
 
 type CompanySuggestion = {
-  readonly confidence: number
+  readonly confidence: Confidence
   readonly defaultCategoryId: CategoryId
-  readonly display: string
-  readonly id: string
-  readonly type: string
+  readonly display: CompanyDisplayName
+  readonly id: CompanyId
+  readonly type: CompanyType
 }
 
 type ParsedDate = {
   readonly assumption: AssumptionCode | null
-  readonly value: string | null
+  readonly value: TransactionDate | null
 }
 
 type ParsedAmount = {
   readonly assumption: AssumptionCode | null
-  readonly cents: number | null
+  readonly cents: AmountCents | null
 }
 
 type NormalizedCurrency = {
   readonly assumption: AssumptionCode | null
-  readonly value: string
+  readonly value: Currency | null
 }
 
 type NormalizedCategory = {
@@ -118,40 +133,11 @@ type NormalizedRow = {
   readonly category: NormalizedCategory
   readonly currency: NormalizedCurrency
   readonly date: ParsedDate
-  readonly direction: "credit" | "debit"
+  readonly direction: TransactionDirection
   readonly merchant: CompanySuggestion
   readonly row: RawRow
-  readonly status: "pending" | "posted"
+  readonly status: TransactionStatus
 }
-
-type AssumptionCode =
-  | "AMOUNT_TEXT_PARSED"
-  | "CATEGORY_CASE_NORMALIZED"
-  | "DATE_FORMAT_SLASH_DD_MM"
-  | "DATE_ISO_TIMESTAMP_TRUNCATED"
-  | "DATE_TEXT_MONTH_PARSED"
-  | "DUPLICATE_SUPPRESSED"
-  | "LLM_MERCHANT_SEMANTIC_MAPPING"
-  | "LLM_SUGGESTION_REJECTED"
-  | "LOWERCASE_CURRENCY_UPPERCASED"
-  | "MISSING_CATEGORY_UNCATEGORIZED"
-  | "MISSING_CURRENCY_DEFAULT_CAD"
-  | "MISSING_EXTERNAL_ID_FINGERPRINTED"
-  | "PENDING_STATUS_EXTRACTED"
-  | "REPRESENTATIVE_SELECTED"
-
-type CategoryId =
-  | "coffee"
-  | "food_delivery"
-  | "gas"
-  | "groceries"
-  | "home"
-  | "income"
-  | "restaurants"
-  | "shopping"
-  | "subscriptions"
-  | "transport"
-  | "uncategorized"
 
 type DecisionInput = {
   readonly assumption: AssumptionCode
@@ -164,20 +150,6 @@ type DecisionInput = {
   readonly rawValue?: unknown
   readonly ruleId: string
   readonly scope: string
-}
-
-const categoryLabels: Readonly<Record<CategoryId, string>> = {
-  coffee: "Coffee",
-  food_delivery: "Food Delivery",
-  gas: "Gas",
-  groceries: "Groceries",
-  home: "Home",
-  income: "Income",
-  restaurants: "Restaurants",
-  shopping: "Shopping",
-  subscriptions: "Subscriptions",
-  transport: "Transport",
-  uncategorized: "Uncategorized"
 }
 
 const categoryEntries: ReadonlyArray<readonly [CategoryId, string]> = [
@@ -650,11 +622,13 @@ function normalizeRows(
     const category = normalizeCategory(row.category)
     const status = hasPending(row.merchant) ? "pending" : "posted"
 
-    if (date.value === null || amount.cents === null || row.merchant === null) {
+    if (date.value === null || amount.cents === null || currency.value === null || row.merchant === null) {
       const exceptionCode = date.value === null
         ? "UNPARSEABLE_DATE"
         : amount.cents === null
         ? "UNPARSEABLE_AMOUNT"
+        : currency.value === null
+        ? "UNSUPPORTED_CURRENCY"
         : "MISSING_MERCHANT"
       statements.insertException.run(
         prefixedHash("exception", `${row.id}:${exceptionCode}`),
@@ -666,7 +640,7 @@ function normalizeRows(
         MOCK_TIMESTAMP
       )
     } else {
-      const direction = amount.cents < 0 ? "debit" : "credit"
+      const direction: TransactionDirection = amount.cents < 0 ? "debit" : "credit"
       normalized.push({ amount, category, currency, date, direction, merchant, row, status })
     }
   }
@@ -937,9 +911,34 @@ function readSummary(db: DatabaseSync): MaterializationSummary {
       (SELECT COUNT(*) FROM llm_mapping_suggestions WHERE accepted = 0) AS rejectedLlmSuggestions,
       (SELECT COUNT(*) FROM mapping_decisions) AS mappingDecisions,
       (SELECT COUNT(*) FROM mapping_exceptions) AS exceptions
-  `).get() as Omit<MaterializationSummary, "idempotentSkip">
+  `).get() as {
+    readonly acceptedLlmSuggestions: number
+    readonly aliases: number
+    readonly canonicalTransactions: number
+    readonly companies: number
+    readonly duplicateSources: number
+    readonly exceptions: number
+    readonly llmSuggestions: number
+    readonly mappingDecisions: number
+    readonly rawTransactions: number
+    readonly rejectedLlmSuggestions: number
+    readonly sourceLinks: number
+  }
 
-  return { ...counts, idempotentSkip: false }
+  return {
+    acceptedLlmSuggestions: TransactionCount.make(counts.acceptedLlmSuggestions),
+    aliases: TransactionCount.make(counts.aliases),
+    canonicalTransactions: TransactionCount.make(counts.canonicalTransactions),
+    companies: TransactionCount.make(counts.companies),
+    duplicateSources: TransactionCount.make(counts.duplicateSources),
+    exceptions: TransactionCount.make(counts.exceptions),
+    idempotentSkip: false,
+    llmSuggestions: TransactionCount.make(counts.llmSuggestions),
+    mappingDecisions: TransactionCount.make(counts.mappingDecisions),
+    rawTransactions: TransactionCount.make(counts.rawTransactions),
+    rejectedLlmSuggestions: TransactionCount.make(counts.rejectedLlmSuggestions),
+    sourceLinks: TransactionCount.make(counts.sourceLinks)
+  }
 }
 
 function readExactDuplicateExcess(db: DatabaseSync): number {
@@ -1012,7 +1011,7 @@ const monthNumbers = new Map([
   ["DEC", "12"]
 ])
 
-function validIsoDate(yearText: string, monthText: string, dayText: string): string | null {
+function validIsoDate(yearText: string, monthText: string, dayText: string): TransactionDate | null {
   const year = Number.parseInt(yearText, 10)
   const month = Number.parseInt(monthText, 10)
   const day = Number.parseInt(dayText, 10)
@@ -1022,7 +1021,9 @@ function validIsoDate(yearText: string, monthText: string, dayText: string): str
   const valid = date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
   if (!valid) return null
 
-  return `${year.toString().padStart(4, "0")}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`
+  return TransactionDate.make(
+    `${year.toString().padStart(4, "0")}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`
+  )
 }
 
 function parseAmount(rawAmount: number | string | null): ParsedAmount {
@@ -1030,7 +1031,10 @@ function parseAmount(rawAmount: number | string | null): ParsedAmount {
   if (typeof rawAmount === "string" && rawAmount.trim() === "") return { assumption: null, cents: null }
   const amount = Number(rawAmount)
   return Number.isFinite(amount)
-    ? { assumption: typeof rawAmount === "string" ? "AMOUNT_TEXT_PARSED" : null, cents: Math.round(amount * 100) }
+    ? {
+      assumption: typeof rawAmount === "string" ? "AMOUNT_TEXT_PARSED" : null,
+      cents: AmountCents.make(Math.round(amount * 100))
+    }
     : { assumption: null, cents: null }
 }
 
@@ -1040,9 +1044,13 @@ function normalizeCurrency(rawCurrency: string | null): NormalizedCurrency {
   }
 
   const currency = rawCurrency.trim().toLocaleUpperCase()
+  if (currency !== DEFAULT_CURRENCY) {
+    return { assumption: null, value: null }
+  }
+
   return {
     assumption: rawCurrency === currency ? null : "LOWERCASE_CURRENCY_UPPERCASED",
-    value: currency
+    value: DEFAULT_CURRENCY
   }
 }
 
@@ -1052,11 +1060,11 @@ function normalizeCategory(rawCategory: string | null): NormalizedCategory {
   }
 
   const normalized = rawCategory.trim().toLocaleLowerCase()
-  for (const [id, label] of Object.entries(categoryLabels)) {
+  for (const [id, label] of categoryEntries) {
     if (normalized === label.toLocaleLowerCase()) {
       return {
         assumption: rawCategory === label ? null : "CATEGORY_CASE_NORMALIZED",
-        id: id as CategoryId
+        id
       }
     }
   }
@@ -1090,11 +1098,17 @@ function companyFor(rawMerchant: string | null): CompanySuggestion {
 function company(
   id: string,
   display: string,
-  type: string,
+  type: CompanyType,
   defaultCategoryId: CategoryId,
   confidence: number
 ): CompanySuggestion {
-  return { confidence, defaultCategoryId, display, id, type }
+  return {
+    confidence: Confidence.make(confidence),
+    defaultCategoryId,
+    display: CompanyDisplayName.make(display),
+    id: CompanyId.make(id),
+    type
+  }
 }
 
 function businessKey(row: NormalizedRow): string {

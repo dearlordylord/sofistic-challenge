@@ -1,15 +1,7 @@
 import type { TransactionFeedItem } from "@sofistic/api"
+import type { CleanTransaction } from "@sofistic/transactions-shared"
 
-type FeedCleanTransaction = {
-  readonly amountMinor: string
-  readonly category: string
-  readonly currency: "CAD"
-  readonly id: string
-  readonly merchant: string
-  readonly transactionDate: string
-}
-
-export function toTransactionFeedItem(transaction: FeedCleanTransaction): TransactionFeedItem {
+export function toTransactionFeedItem(transaction: CleanTransaction): TransactionFeedItem {
   return {
     amountMinor: transaction.amountMinor,
     category: transaction.category,

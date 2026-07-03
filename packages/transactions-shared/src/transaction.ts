@@ -1,7 +1,21 @@
 import { Schema } from "effect"
 
-export const NullableString = Schema.NullOr(Schema.String)
-export const RawAmount = Schema.NullOr(Schema.Union(Schema.Number, Schema.String))
+import {
+  AmountMinor,
+  CanonicalTransactionId,
+  CategoryDisplayName,
+  Currency,
+  DedupeKey,
+  MerchantDisplayName,
+  MerchantSearchQuery,
+  RawAmountValue,
+  RawNullableText,
+  RawTransactionRowId,
+  TransactionDate
+} from "./domain.js"
+
+export const NullableString = RawNullableText
+export const RawAmount = RawAmountValue
 
 export const RawTransaction = Schema.Struct({
   amount: RawAmount,
@@ -19,22 +33,24 @@ export const StoredRawTransaction = Schema.Struct({
   currency: NullableString,
   date: NullableString,
   external_id: NullableString,
-  id: Schema.Number,
+  id: RawTransactionRowId,
   merchant: NullableString
 })
 export type StoredRawTransaction = Schema.Schema.Type<typeof StoredRawTransaction>
 
-export type CleanTransaction = {
-  readonly amountMinor: string
-  readonly category: string
-  readonly currency: "CAD"
-  readonly dedupeKey: string
-  readonly id: string
-  readonly merchant: string
-  readonly sourceRowId: number
-  readonly transactionDate: string
-}
+export const CleanTransaction = Schema.Struct({
+  amountMinor: AmountMinor,
+  category: CategoryDisplayName,
+  currency: Currency,
+  dedupeKey: DedupeKey,
+  id: CanonicalTransactionId,
+  merchant: MerchantDisplayName,
+  sourceRowId: RawTransactionRowId,
+  transactionDate: TransactionDate
+})
+export type CleanTransaction = Schema.Schema.Type<typeof CleanTransaction>
 
-export type TransactionSearch = {
-  readonly query: string
-}
+export const TransactionSearch = Schema.Struct({
+  query: MerchantSearchQuery
+})
+export type TransactionSearch = Schema.Schema.Type<typeof TransactionSearch>
