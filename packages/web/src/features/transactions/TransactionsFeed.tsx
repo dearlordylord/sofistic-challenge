@@ -80,10 +80,10 @@ function TransactionTable({ items }: { readonly items: ReadonlyArray<Transaction
       <tbody>
         {items.map((transaction) => (
           <tr key={transaction.id}>
-            <Td>{transaction.date}</Td>
+            <Td>{transaction.transactionDate}</Td>
             <Td>{transaction.merchant}</Td>
             <Td>{transaction.category}</Td>
-            <Td align="right">{formatMoney(transaction.amount, transaction.currency)}</Td>
+            <Td align="right">{formatMoney(transaction.amountMinor, transaction.currency)}</Td>
           </tr>
         ))}
       </tbody>
@@ -107,7 +107,8 @@ function Td({ align, children }: { readonly align?: "left" | "right"; readonly c
   )
 }
 
-function formatMoney(amount: number, currency: string): string {
+function formatMoney(amountMinor: string, currency: string): string {
+  const amount = Number.parseInt(amountMinor, 10) / 100
   return new Intl.NumberFormat("en-CA", {
     currency,
     style: "currency"

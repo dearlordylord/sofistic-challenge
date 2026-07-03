@@ -2,6 +2,7 @@ import type { CleanTransaction, StoredRawTransaction } from "@sofistic/transacti
 
 const DEFAULT_CURRENCY = "CAD"
 const DEFAULT_CATEGORY = "Uncategorized"
+const MINOR_UNITS_PER_MAJOR_UNIT = 100
 const ISO_DATE_LENGTH = 10
 const MIN_SLASH_DATE_PARTS = 3
 
@@ -54,27 +55,31 @@ export function listCleanTransactions(
 }
 
 export function cleanTransaction(row: StoredRawTransaction): CleanTransaction | null {
-  const amount = parseAmount(row.amount)
+  const amountMinor = parseAmountMinor(row.amount)
   const date = parseDate(row.date)
   const merchant = normalizeMerchant(row.merchant)
 
-  if (amount === null || date === null || merchant === null) {
+  if (amountMinor === null || date === null || merchant === null) {
     return null
   }
 
   const currency = normalizeCurrency(row.currency)
   const category = normalizeCategory(row.category)
-  const dedupeKey = `${date}|${merchant.toLocaleUpperCase()}|${amount.toFixed(2)}|${currency}`
+  if (currency === null) {
+    return null
+  }
+
+  const dedupeKey = `${date}|${merchant.toLocaleUpperCase()}|${amountMinor}|${currency}`
 
   return {
-    amount,
+    amountMinor,
     category,
     currency,
-    date,
     dedupeKey,
-    id: row.external_id?.trim() === "" || row.external_id === null ? `row-${row.id}` : row.external_id.trim(),
+    id: `ctx-${stableId(dedupeKey)}`,
     merchant,
-    sourceRowId: row.id
+    sourceRowId: row.id,
+    transactionDate: date
   }
 }
 
@@ -98,10 +103,22 @@ export function normalizeMerchant(rawMerchant: string | null): string | null {
   return titleCase(compact.replaceAll(/\b(ON|CA|CANADA|TORONTO)\b/g, "").trim())
 }
 
-function parseAmount(rawAmount: number | string | null): number | null {
+function parseAmountMinor(rawAmount: number | string | null): string | null {
   if (rawAmount === null) return null
-  const amount = typeof rawAmount === "number" ? rawAmount : Number.parseFloat(rawAmount)
-  return Number.isFinite(amount) ? amount : null
+  const amount = typeof rawAmount === "number" ? rawAmount.toString() : rawAmount.trim()
+  if (amount === "") return null
+
+  const match = /^(-?)(\d+)(?:\.(\d{1,2}))?$/.exec(amount)
+  if (match === null) return null
+
+  const sign = match[1] === "-" ? -1n : 1n
+  const major = match[2]
+  const fractional = match[3] ?? ""
+  if (major === undefined) return null
+
+  const cents = BigInt(major) * BigInt(MINOR_UNITS_PER_MAJOR_UNIT)
+    + BigInt(fractional.padEnd(2, "0"))
+  return (sign * cents).toString()
 }
 
 function parseDate(rawDate: string | null): string | null {
@@ -161,9 +178,10 @@ function formatDateParts(yearText: string, monthText: string, dayText: string): 
   return `${year.toString().padStart(4, "0")}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`
 }
 
-function normalizeCurrency(rawCurrency: string | null): string {
+function normalizeCurrency(rawCurrency: string | null): "CAD" | null {
   const currency = rawCurrency?.trim().toLocaleUpperCase()
-  return currency === undefined || currency === "" ? DEFAULT_CURRENCY : currency
+  if (currency === undefined || currency === "") return DEFAULT_CURRENCY
+  return currency === DEFAULT_CURRENCY ? DEFAULT_CURRENCY : null
 }
 
 function normalizeCategory(rawCategory: string | null): string {
@@ -186,6 +204,17 @@ function matchesSearch(transaction: CleanTransaction, searchQuery: string): bool
 }
 
 function compareNewestFirst(left: CleanTransaction, right: CleanTransaction): number {
-  const dateOrder = right.date.localeCompare(left.date)
+  const dateOrder = right.transactionDate.localeCompare(left.transactionDate)
   return dateOrder === 0 ? left.sourceRowId - right.sourceRowId : dateOrder
+}
+
+function stableId(value: string): string {
+  let hash = 0x811c9dc5
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index)
+    hash ^= code
+    hash = Math.imul(hash, 0x01000193)
+  }
+
+  return (hash >>> 0).toString(16).padStart(8, "0")
 }

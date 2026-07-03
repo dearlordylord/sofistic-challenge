@@ -15,12 +15,36 @@ describe("transaction cleaning", () => {
     })
 
     expect(transaction).toMatchObject({
-      amount: -11.74,
+      amountMinor: "-1174",
       category: "Transport",
       currency: "CAD",
-      date: "2026-06-01",
-      merchant: "Uber"
+      merchant: "Uber",
+      transactionDate: "2026-06-01"
     })
+  })
+
+  it("uses a stable canonical id derived from cleaned transaction identity", () => {
+    const first = cleanTransaction({
+      amount: "-161.17",
+      category: "Shopping",
+      currency: "CAD",
+      date: "07 Apr 2026",
+      external_id: "tx_1021",
+      id: 1,
+      merchant: "AMAZON.CA TORONTO ON"
+    })
+    const second = cleanTransaction({
+      amount: -161.17,
+      category: "shopping",
+      currency: "cad",
+      date: "2026-04-07",
+      external_id: "tx_duplicate",
+      id: 2,
+      merchant: "AMZN Mktp CA"
+    })
+
+    expect(first?.id).toMatch(/^ctx-[a-f0-9]{8}$/)
+    expect(second?.id).toBe(first?.id)
   })
 
   it("dedupes by cleaned transaction identity and searches merchant display names", () => {
@@ -56,7 +80,8 @@ describe("transaction cleaning", () => {
 
     expect(transactions).toHaveLength(1)
     expect(transactions[0]).toMatchObject({
-      id: "tx_1021",
+      amountMinor: "-16117",
+      currency: "CAD",
       merchant: "Amazon"
     })
   })
@@ -71,6 +96,15 @@ describe("transaction cleaning", () => {
         external_id: "tx_1042",
         id: 1,
         merchant: "STARBUCKS #1042"
+      },
+      {
+        amount: "-10.00",
+        category: "Coffee",
+        currency: "USD",
+        date: "2026-06-18T00:00:00.000Z",
+        external_id: "tx_1043",
+        id: 2,
+        merchant: "STARBUCKS #1043"
       }
     ], "")
 
