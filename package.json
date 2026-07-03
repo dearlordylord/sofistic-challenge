@@ -20,7 +20,7 @@
     "check-all": "pnpm build && pnpm typecheck && pnpm lint && pnpm circular && pnpm test"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.13.0"
   },
   "devDependencies": {
     "@effect/eslint-plugin": "^0.3.2",
