@@ -1,6 +1,6 @@
 /* eslint-disable max-lines, no-restricted-syntax -- temporary SQLite fixture materializer mirrors ADR tables directly and casts raw query rows */
-import { existsSync, mkdirSync, readFileSync } from "node:fs"
 import { createHash } from "node:crypto"
+import { existsSync, mkdirSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
@@ -40,6 +40,10 @@ export type MaterializationOptions = {
   readonly seedFile?: string
 }
 
+export function defaultDatabaseFile(): string {
+  return join(workspaceRoot(), "packages", "transactions-db", "data", "app.db")
+}
+
 export type MaterializationSummary = {
   readonly acceptedLlmSuggestions: number
   readonly aliases: number
@@ -63,6 +67,22 @@ type RawRow = {
   readonly external_id: string | null
   readonly id: number
   readonly merchant: string | null
+}
+
+type MappingRunRow = {
+  readonly accepted_llm_suggestion_count: number | null
+  readonly canonical_transaction_count: number | null
+  readonly business_duplicate_count: number | null
+  readonly company_alias_count: number | null
+  readonly company_count: number | null
+  readonly exception_count: number | null
+  readonly finished_at: string | null
+  readonly input_fingerprint: string | null
+  readonly input_row_count: number
+  readonly llm_suggestion_count: number | null
+  readonly mapping_decision_count: number | null
+  readonly rejected_llm_suggestion_count: number | null
+  readonly source_link_count: number | null
 }
 
 type CompanySuggestion = {
@@ -191,48 +211,51 @@ const assumptions: ReadonlyArray<readonly [AssumptionCode, string, string, numbe
   ["REPRESENTATIVE_SELECTED", "Representative raw row selected", "info", 0]
 ]
 
-function materializeCanonicalTransactionModelInOpenDatabase(db: DatabaseSync, seedFile: string): MaterializationSummary {
+function materializeCanonicalTransactionModelInOpenDatabase(
+  db: DatabaseSync,
+  seedFile: string
+): MaterializationSummary {
+  db.exec("PRAGMA foreign_keys = ON")
   ensureRawTransactionsSeeded(db, seedFile)
+  const rawRows = readRawRows(db)
+  const inputFingerprint = fingerprintRawRows(rawRows)
 
-  if (hasCompleteCurrentRun(db)) {
+  if (hasCompleteCurrentRun(db, inputFingerprint)) {
     return { ...readSummary(db), idempotentSkip: true }
-  }
-
-  recreateCanonicalTables(db)
-
-  const rawRows = db.prepare(
-    "SELECT id, external_id, date, merchant, amount, currency, category FROM transactions ORDER BY id ASC"
-  ).all() as unknown as ReadonlyArray<RawRow>
-  const statements = prepareStatements(db)
-  let decisionNumber = 0
-
-  const addDecision = (input: DecisionInput) => {
-    decisionNumber += 1
-    statements.insertDecision.run(
-      `decision_${String(decisionNumber).padStart(5, "0")}`,
-      MAPPING_RUN_ID,
-      input.rawId ?? null,
-      input.canonicalId ?? null,
-      input.scope,
-      input.field ?? null,
-      toNullableString(input.rawValue),
-      toNullableString(input.mappedValue),
-      input.assumption,
-      input.ruleId,
-      "1",
-      input.confidence ?? 1,
-      JSON.stringify(input.detail ?? {}),
-      MOCK_TIMESTAMP
-    )
   }
 
   db.exec("BEGIN")
   try {
+    recreateCanonicalTables(db)
+    const statements = prepareStatements(db)
+    let decisionNumber = 0
+
+    const addDecision = (input: DecisionInput) => {
+      decisionNumber += 1
+      statements.insertDecision.run(
+        `decision_${String(decisionNumber).padStart(5, "0")}`,
+        MAPPING_RUN_ID,
+        input.rawId ?? null,
+        input.canonicalId ?? null,
+        input.scope,
+        input.field ?? null,
+        toNullableString(input.rawValue),
+        toNullableString(input.mappedValue),
+        input.assumption,
+        input.ruleId,
+        "1",
+        input.confidence ?? 1,
+        JSON.stringify(input.detail ?? {}),
+        MOCK_TIMESTAMP
+      )
+    }
+
     statements.insertRun.run(
       MAPPING_RUN_ID,
       MAPPER_VERSION,
       RULESET_VERSION,
       MOCK_TIMESTAMP,
+      inputFingerprint,
       rawRows.length,
       "Simulated ADR 0001 mapper run with accepted LLM-style semantic suggestions."
     )
@@ -255,12 +278,20 @@ function materializeCanonicalTransactionModelInOpenDatabase(db: DatabaseSync, se
     }
 
     const exactDuplicateExcess = readExactDuplicateExcess(db)
-    const businessDuplicateExcess = readDuplicateSourceCount(db)
+    const finalSummary = readSummary(db)
     statements.finishRun.run(
       MOCK_FINISHED_AT,
-      dedupeGroups.size,
+      finalSummary.canonicalTransactions,
       exactDuplicateExcess,
-      businessDuplicateExcess,
+      finalSummary.duplicateSources,
+      finalSummary.sourceLinks,
+      finalSummary.companies,
+      finalSummary.aliases,
+      finalSummary.llmSuggestions,
+      finalSummary.acceptedLlmSuggestions,
+      finalSummary.rejectedLlmSuggestions,
+      finalSummary.mappingDecisions,
+      finalSummary.exceptions,
       MAPPING_RUN_ID
     )
     db.exec("COMMIT")
@@ -316,7 +347,20 @@ function ensureRawTransactionsSeeded(db: DatabaseSync, seedFile: string) {
 function prepareStatements(db: DatabaseSync) {
   return {
     finishRun: db.prepare(
-      "UPDATE mapping_runs SET finished_at = ?, canonical_transaction_count = ?, exact_duplicate_count = ?, business_duplicate_count = ? WHERE id = ?"
+      `UPDATE mapping_runs
+       SET finished_at = ?,
+           canonical_transaction_count = ?,
+           exact_duplicate_count = ?,
+           business_duplicate_count = ?,
+           source_link_count = ?,
+           company_count = ?,
+           company_alias_count = ?,
+           llm_suggestion_count = ?,
+           accepted_llm_suggestion_count = ?,
+           rejected_llm_suggestion_count = ?,
+           mapping_decision_count = ?,
+           exception_count = ?
+       WHERE id = ?`
     ),
     insertAlias: db.prepare("INSERT OR IGNORE INTO company_aliases VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"),
     insertAssumption: db.prepare("INSERT INTO mapping_assumption_groups VALUES (?, ?, ?, ?, ?, ?)"),
@@ -326,13 +370,30 @@ function prepareStatements(db: DatabaseSync) {
     insertDecision: db.prepare("INSERT INTO mapping_decisions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"),
     insertException: db.prepare("INSERT INTO mapping_exceptions VALUES (?, ?, ?, ?, ?, ?, ?)"),
     insertRun: db.prepare(
-      "INSERT INTO mapping_runs (id, mapper_version, ruleset_version, started_at, input_row_count, notes) VALUES (?, ?, ?, ?, ?, ?)"
+      "INSERT INTO mapping_runs (id, mapper_version, ruleset_version, started_at, input_fingerprint, input_row_count, notes) VALUES (?, ?, ?, ?, ?, ?, ?)"
     ),
     insertSource: db.prepare("INSERT INTO canonical_transaction_sources VALUES (?, ?, ?, ?)"),
     insertSuggestion: db.prepare(
       "INSERT INTO llm_mapping_suggestions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
   }
+}
+
+function readRawRows(db: DatabaseSync): ReadonlyArray<RawRow> {
+  return db.prepare(
+    "SELECT id, external_id, date, merchant, amount, currency, category FROM transactions ORDER BY id ASC"
+  ).all() as unknown as ReadonlyArray<RawRow>
+}
+
+function fingerprintRawRows(rawRows: ReadonlyArray<RawRow>): string {
+  return stableHash(
+    JSON.stringify({
+      mapperVersion: MAPPER_VERSION,
+      rows: rawRows,
+      rulesetVersion: RULESET_VERSION
+    }),
+    64
+  )
 }
 
 function recreateCanonicalTables(db: DatabaseSync) {
@@ -354,10 +415,19 @@ function recreateCanonicalTables(db: DatabaseSync) {
       ruleset_version TEXT NOT NULL,
       started_at TEXT NOT NULL,
       finished_at TEXT,
+      input_fingerprint TEXT NOT NULL,
       input_row_count INTEGER NOT NULL,
       canonical_transaction_count INTEGER,
       exact_duplicate_count INTEGER,
       business_duplicate_count INTEGER,
+      source_link_count INTEGER,
+      company_count INTEGER,
+      company_alias_count INTEGER,
+      llm_suggestion_count INTEGER,
+      accepted_llm_suggestion_count INTEGER,
+      rejected_llm_suggestion_count INTEGER,
+      mapping_decision_count INTEGER,
+      exception_count INTEGER,
       notes TEXT
     );
 
@@ -375,7 +445,8 @@ function recreateCanonicalTables(db: DatabaseSync) {
       display_name TEXT NOT NULL,
       parent_category_id TEXT,
       created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (parent_category_id) REFERENCES categories(id)
     );
 
     CREATE TABLE companies (
@@ -417,7 +488,8 @@ function recreateCanonicalTables(db: DatabaseSync) {
       accepted INTEGER NOT NULL,
       rejection_reason TEXT,
       occurrence_count INTEGER NOT NULL,
-      created_at TEXT NOT NULL
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (mapping_run_id) REFERENCES mapping_runs(id)
     );
 
     CREATE TABLE canonical_transactions (
@@ -434,7 +506,12 @@ function recreateCanonicalTables(db: DatabaseSync) {
       confidence REAL NOT NULL,
       mapping_run_id TEXT NOT NULL,
       created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (company_id) REFERENCES companies(id),
+      FOREIGN KEY (category_id) REFERENCES categories(id),
+      FOREIGN KEY (mapping_run_id) REFERENCES mapping_runs(id),
+      CHECK (direction IN ('credit', 'debit')),
+      CHECK (status IN ('pending', 'posted'))
     );
 
     CREATE TABLE canonical_transaction_sources (
@@ -461,7 +538,11 @@ function recreateCanonicalTables(db: DatabaseSync) {
       rule_version TEXT NOT NULL,
       confidence REAL NOT NULL,
       decision_json TEXT NOT NULL,
-      created_at TEXT NOT NULL
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (mapping_run_id) REFERENCES mapping_runs(id),
+      FOREIGN KEY (raw_transaction_id) REFERENCES transactions(id),
+      FOREIGN KEY (canonical_transaction_id) REFERENCES canonical_transactions(id),
+      FOREIGN KEY (assumption_group_id) REFERENCES mapping_assumption_groups(id)
     );
 
     CREATE TABLE mapping_exceptions (
@@ -471,7 +552,9 @@ function recreateCanonicalTables(db: DatabaseSync) {
       exception_code TEXT NOT NULL,
       exception_message TEXT NOT NULL,
       raw_payload_json TEXT NOT NULL,
-      created_at TEXT NOT NULL
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (mapping_run_id) REFERENCES mapping_runs(id),
+      FOREIGN KEY (raw_transaction_id) REFERENCES transactions(id)
     );
   `)
 }
@@ -499,10 +582,12 @@ function materializeLlmSuggestions(rawRows: ReadonlyArray<RawRow>, statements: R
   }
 
   for (const { descriptors, rows, suggestion } of groups.values()) {
-    statements.insertCompany.run(suggestion.id, suggestion.display, suggestion.type, MOCK_TIMESTAMP, MOCK_TIMESTAMP)
     const examples = Array.from(descriptors).sort()
     const suggestionId = prefixedHash("llm_suggestion", `${suggestion.id}:${examples.join("|")}`)
     const accepted = suggestion.id !== "unknown" && suggestion.confidence >= ACCEPTED_LLM_CONFIDENCE
+    if (accepted || suggestion.id === "unknown") {
+      statements.insertCompany.run(suggestion.id, suggestion.display, suggestion.type, MOCK_TIMESTAMP, MOCK_TIMESTAMP)
+    }
     const response = {
       companyDisplayName: suggestion.display,
       companyType: suggestion.type,
@@ -532,19 +617,21 @@ function materializeLlmSuggestions(rawRows: ReadonlyArray<RawRow>, statements: R
       MOCK_TIMESTAMP
     )
 
-    for (const descriptor of examples) {
-      const normalized = normalizedDescriptor(descriptor)
-      statements.insertAlias.run(
-        prefixedHash("alias", `${suggestion.id}:${normalized}`),
-        suggestion.id,
-        "llm_suggested",
-        descriptor,
-        normalized,
-        `llm_mapping_suggestions:${suggestionId}`,
-        100,
-        MOCK_TIMESTAMP,
-        null
-      )
+    if (accepted) {
+      for (const descriptor of examples) {
+        const normalized = normalizedDescriptor(descriptor)
+        statements.insertAlias.run(
+          prefixedHash("alias", `${suggestion.id}:${normalized}`),
+          suggestion.id,
+          "llm_suggested",
+          descriptor,
+          normalized,
+          `llm_mapping_suggestions:${suggestionId}`,
+          100,
+          MOCK_TIMESTAMP,
+          null
+        )
+      }
     }
   }
 }
@@ -696,15 +783,16 @@ function materializeCanonicalGroup(
 }
 
 function addCoreDecisions(row: NormalizedRow, canonicalId: string, addDecision: (input: DecisionInput) => void) {
+  const merchantSuggestionAccepted = row.merchant.id !== "unknown" && row.merchant.confidence >= ACCEPTED_LLM_CONFIDENCE
   addDecision({
-    assumption: "LLM_MERCHANT_SEMANTIC_MAPPING",
+    assumption: merchantSuggestionAccepted ? "LLM_MERCHANT_SEMANTIC_MAPPING" : "LLM_SUGGESTION_REJECTED",
     canonicalId,
     confidence: row.merchant.confidence,
     field: "company_id",
     mappedValue: row.merchant.id,
     rawId: row.row.id,
     rawValue: row.row.merchant,
-    ruleId: "merchant.llm_descriptor_group",
+    ruleId: merchantSuggestionAccepted ? "merchant.llm_descriptor_group" : "merchant.llm_descriptor_group_rejected",
     scope: "merchant_resolution"
   })
 
@@ -789,7 +877,7 @@ function addCoreDecisions(row: NormalizedRow, canonicalId: string, addDecision: 
   }
 }
 
-function hasCompleteCurrentRun(db: DatabaseSync): boolean {
+function hasCompleteCurrentRun(db: DatabaseSync, inputFingerprint: string): boolean {
   const requiredTables = [
     "canonical_transaction_sources",
     "canonical_transactions",
@@ -812,23 +900,24 @@ function hasCompleteCurrentRun(db: DatabaseSync): boolean {
       if (table === undefined) return false
     }
 
-    const row = db.prepare("SELECT finished_at FROM mapping_runs WHERE id = ?").get(MAPPING_RUN_ID) as {
-      readonly finished_at: string | null
-    } | undefined
+    const row = db.prepare("SELECT * FROM mapping_runs WHERE id = ?").get(MAPPING_RUN_ID) as
+      | MappingRunRow
+      | undefined
     if (row?.finished_at === null || row?.finished_at === undefined) return false
+    if (row.input_fingerprint !== inputFingerprint) return false
 
     const summary = readSummary(db)
-    return summary.rawTransactions === 86
-      && summary.canonicalTransactions === 73
-      && summary.sourceLinks === 86
-      && summary.duplicateSources === 13
-      && summary.companies === 14
-      && summary.aliases === 29
-      && summary.llmSuggestions === 14
-      && summary.acceptedLlmSuggestions === 14
-      && summary.rejectedLlmSuggestions === 0
-      && summary.mappingDecisions === 243
-      && summary.exceptions === 0
+    return summary.rawTransactions === row.input_row_count
+      && summary.canonicalTransactions === row.canonical_transaction_count
+      && summary.sourceLinks === row.source_link_count
+      && summary.duplicateSources === row.business_duplicate_count
+      && summary.companies === row.company_count
+      && summary.aliases === row.company_alias_count
+      && summary.llmSuggestions === row.llm_suggestion_count
+      && summary.acceptedLlmSuggestions === row.accepted_llm_suggestion_count
+      && summary.rejectedLlmSuggestions === row.rejected_llm_suggestion_count
+      && summary.mappingDecisions === row.mapping_decision_count
+      && summary.exceptions === row.exception_count
   } catch {
     return false
   }
@@ -867,12 +956,6 @@ function readExactDuplicateExcess(db: DatabaseSync): number {
   return row.count
 }
 
-function readDuplicateSourceCount(db: DatabaseSync): number {
-  const row = db.prepare("SELECT COUNT(*) AS count FROM canonical_transaction_sources WHERE source_role = 'duplicate'")
-    .get() as { readonly count: number }
-  return row.count
-}
-
 function parseDate(rawDate: string | null): ParsedDate {
   if (rawDate === null) return { assumption: null, value: null }
 
@@ -882,9 +965,10 @@ function parseDate(rawDate: string | null): ParsedDate {
     const month = isoMatch[2]
     const day = isoMatch[3]
     if (year !== undefined && month !== undefined && day !== undefined) {
+      const value = validIsoDate(year, month, day)
       return {
         assumption: rawDate.includes("T") ? "DATE_ISO_TIMESTAMP_TRUNCATED" : null,
-        value: `${year}-${month}-${day}`
+        value
       }
     }
   }
@@ -896,9 +980,7 @@ function parseDate(rawDate: string | null): ParsedDate {
     const year = namedMonthMatch[3]
     if (day !== undefined && monthText !== undefined && year !== undefined) {
       const month = monthNumbers.get(monthText.toLocaleUpperCase())
-      if (month !== undefined) {
-        return { assumption: "DATE_TEXT_MONTH_PARSED", value: `${year}-${month}-${day.padStart(2, "0")}` }
-      }
+      if (month !== undefined) return { assumption: "DATE_TEXT_MONTH_PARSED", value: validIsoDate(year, month, day) }
     }
   }
 
@@ -908,7 +990,7 @@ function parseDate(rawDate: string | null): ParsedDate {
     const month = slashMatch[2]
     const year = slashMatch[3]
     if (day !== undefined && month !== undefined && year !== undefined) {
-      return { assumption: "DATE_FORMAT_SLASH_DD_MM", value: `${year}-${month}-${day}` }
+      return { assumption: "DATE_FORMAT_SLASH_DD_MM", value: validIsoDate(year, month, day) }
     }
   }
 
@@ -930,8 +1012,22 @@ const monthNumbers = new Map([
   ["DEC", "12"]
 ])
 
+function validIsoDate(yearText: string, monthText: string, dayText: string): string | null {
+  const year = Number.parseInt(yearText, 10)
+  const month = Number.parseInt(monthText, 10)
+  const day = Number.parseInt(dayText, 10)
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return null
+
+  const date = new Date(Date.UTC(year, month - 1, day))
+  const valid = date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+  if (!valid) return null
+
+  return `${year.toString().padStart(4, "0")}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`
+}
+
 function parseAmount(rawAmount: number | string | null): ParsedAmount {
   if (rawAmount === null) return { assumption: null, cents: null }
+  if (typeof rawAmount === "string" && rawAmount.trim() === "") return { assumption: null, cents: null }
   const amount = Number(rawAmount)
   return Number.isFinite(amount)
     ? { assumption: typeof rawAmount === "string" ? "AMOUNT_TEXT_PARSED" : null, cents: Math.round(amount * 100) }
@@ -1041,8 +1137,11 @@ function prefixedHash(prefix: string, value: string): string {
 }
 
 function defaultSeedFile(): string {
-  const packageRoot = findAncestorContaining("pnpm-workspace.yaml", process.cwd())
-  return join(packageRoot, "packages", "transactions-db", "seed", "transactions.json")
+  return join(workspaceRoot(), "packages", "transactions-db", "seed", "transactions.json")
+}
+
+function workspaceRoot(): string {
+  return findAncestorContaining("pnpm-workspace.yaml", process.cwd())
 }
 
 function findAncestorContaining(fileName: string, startDir: string): string {

@@ -53,7 +53,7 @@ We then implemented a hardcoded mock of the ADR workflow in:
 
 and a runnable script:
 
-`packages/transactions-clean/scripts/materialize-canonical-model.ts`
+`packages/transactions-clean/scripts/materialize-canonical-model.mjs`
 
 This mock intentionally simulates the future LLM-assisted/user-reviewed workflow using deterministic fixture rules for the current dataset. The source file includes a confession comment saying it should be replaced with a proper descriptor-grouping, LLM suggestion, validation, and review workflow before production use.
 
@@ -108,4 +108,3 @@ typecheck: passed
 tests: passed
 lint: passed with warnings
 ```
-
